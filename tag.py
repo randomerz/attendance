@@ -70,7 +70,7 @@ def vis_inp():
 def reset():
 	if not curs: return
 	curs.execute("drop table records")
-	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int)")	
+	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int,testid int)")	
 	return True
 
 def vis_user():
@@ -122,14 +122,15 @@ def getNames():
 	rows = curs.execute("SELECT userid, name FROM users").fetchall()
 	return {i[0]:i[1] for i in rows}
 
-def drawBoxes(vid,datetime,location):
+test_color = lambda c, u, t, b: c if not b else (0,255,0) if t == u else (0,0,255)
+def drawBoxes(vid,datetime,location,test=False):
 	if not curs: return
-	rows = curs.execute("SELECT frame,x,y,width,height,compid,userid FROM records WHERE loc=? and datetime like ?",(location,datetime)).fetchall()
+	rows = curs.execute("SELECT frame,x,y,width,height,compid,userid,testid FROM records WHERE loc=? and datetime like ?",(location,datetime)).fetchall()
 	colors = {}
 	names = getNames()
-	for f,x,y,w,h,c,u in rows:
+	for f,x,y,w,h,c,u,t in rows:
 		if u not in colors: colors[u] = (randint(0,255),randint(0,255),randint(0,255))
-		vid[f] = cv.rectangle(vid[f], (x, y), (x+w, y+h), colors[u], 2) 
+		vid[f] = cv.rectangle(vid[f], (x, y), (x+w, y+h), test_color(colors[u],u,t,test), 2) 
 		vid[f] = cv.putText(vid[f], "Tracking ID: " + str(c),(x,y),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
 		if not args["names"]: vid[f] = cv.putText(vid[f], "User ID: " + str(u),(x,y+h),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
 		else: vid[f] = cv.putText(vid[f], names[u],(x,y+h),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
@@ -146,7 +147,7 @@ def writeVideo(vid,filepath,fps):
 	for frame in vid: out.write(frame)
 	out.release()
 
-def overlay():
+def overlay(test=False):
 	if args["datetime"]: datestr = args["datetime"] + "%"
 	else: datestr = input("Date (yyyy-mm-dd): ")+"%"
 	if args["location"]: loc = args["location"]
@@ -155,7 +156,7 @@ def overlay():
 	oname = input("Video To Output: ")
 	fps = int(input("Frames Per Second: "))
 	vid = readVideo(fname)
-	vid = drawBoxes(vid,datestr,loc)
+	vid = drawBoxes(vid,datestr,loc,test)
 	writeVideo(vid,oname,fps)		
 	
 if __name__ == "__main__":
@@ -174,5 +175,6 @@ if __name__ == "__main__":
 		elif(inp == 6): toJSON()
 		elif(inp == 7): loJSON()
 		elif(inp == 8): overlay() 	
+		elif(inp == 9): overlay(True)
 	close()
 
