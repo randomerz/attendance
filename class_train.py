@@ -14,7 +14,11 @@ ap.add_argument('-d', '--database', help="Path To SQLite Database", required=Tru
 ap.add_argument('-e', '--epochs', help="Number of Epochs To Run", type=int, default=10)
 ap.add_argument('-t', '--datetime', help="Autofill Datetime")
 ap.add_argument('-l', '--location', help="Autofill Location")
-
+ap.add_argument('-s', '--save', help="Model Save Location", default="models/class.h5")
+ap.add_argument('--load', help="Model Load Location", default="models/class.h5")
+ap.add_argument('-p', '--progress', help="Training Figure Location", default="class_train_fig.png")
+ap.add_argument('--train', action="store_true", help="Train Model", default=False)
+ap.add_argument('--test', action="store_true", help="Test Model", default=False)
 args = vars(ap.parse_args())
 
 def connect():
@@ -34,29 +38,30 @@ num_classes = 8
 epoch_size = 64
 s = 64
 
-face_img = Input(shape=(s,s,num_channels))
-conv_1 = Conv2D(64,(5,5),padding='same',activation='relu')(face_img)
-conv_1 = MaxPooling2D(pool_size=(2,2))(conv_1)
-conv_2 = Conv2D(128,(3,3),padding='same',activation='relu')(conv_1)
-conv_2 = MaxPooling2D(pool_size=(2,2))(conv_2)
-conv_3 = Conv2D(192,(3,3))(conv_2)
-conv_4 = Conv2D(192,(3,3))(conv_3)
-conv_5 = Conv2D(256,(3,3))(conv_4)
-conv_5 = MaxPooling2D(pool_size=(2,2))(conv_4)
-vision_model = Model(face_img, conv_5)
+def get_model():
+	face_img = Input(shape=(s,s,num_channels))
+	conv_1 = Conv2D(64,(5,5),padding='same',activation='relu')(face_img)
+	conv_1 = MaxPooling2D(pool_size=(2,2))(conv_1)
+	conv_2 = Conv2D(128,(3,3),padding='same',activation='relu')(conv_1)
+	conv_2 = MaxPooling2D(pool_size=(2,2))(conv_2)
+	conv_3 = Conv2D(192,(3,3))(conv_2)
+	conv_4 = Conv2D(192,(3,3))(conv_3)
+	conv_5 = Conv2D(256,(3,3))(conv_4)
+	conv_5 = MaxPooling2D(pool_size=(2,2))(conv_4)
+	vision_model = Model(face_img, conv_5)
 
-face = Input(shape=(s,s,num_channels))
-vis_out = vision_model(face)
+	face = Input(shape=(s,s,num_channels))
+	vis_out = vision_model(face)
 
-flat = Flatten()(vis_out)
-full_1 = Dense(1000,activation='relu')(flat)
-full_2 = Dense(1000,activation='relu')(full_1)
-full_3 = Dense(num_classes,activation='softmax')(full_2)
-
+	flat = Flatten()(vis_out)
+	full_1 = Dense(1000,activation='relu')(flat)
+	full_2 = Dense(1000,activation='relu')(full_1)
+	full_3 = Dense(num_classes,activation='softmax')(full_2)
+	return Model(face, full_3)
 def pathToImg(path):
 	img = Image.open(path)
 	img.load()
-	data = np.asarray(img.resize((s,s)), dtype="int32")	
+	data = np.asarray(img.resize((s,s)), dtype="float64")/256	
 	return data
 
 def sel_data(n=batch_size):
@@ -94,21 +99,25 @@ def test(model):
 	close(conn)
 	return ret
 try:
-	recog_model = load_model('models/class.h5')
-	print("Loading Saved Model")
+	recog_model = load_model(args['load'])
+	print("Loading Saved Model: " + args['load'])
 except Exception as e:
 	print("Creating New Model due to ", str(e))
-	recog_model = Model(face, full_3)
+	recog_model = get_model() 
 	recog_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 gendata = gen_data()
-history = recog_model.fit_generator(gendata,use_multiprocessing=True,steps_per_epoch=ceil(epoch_size/batch_size),epochs=args["epochs"]*50)
-test(recog_model)
 
-recog_model.save('models/class.h5')
-plt.plot(history.history['acc'])
-plt.title('Model accuracy')
-plt.ylabel('Accuracy')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Test'], loc='upper left')
-plt.savefig("train_acc_class.png")
+if(args["train"]): history = recog_model.fit_generator(gendata,use_multiprocessing=True,steps_per_epoch=ceil(epoch_size/batch_size),epochs=args["epochs"]*50)
+if(args["test"]): test(recog_model)
+
+if(args["train"]):
+	print("Saving Model To: " + args["save"])
+	recog_model.save(args['save'])
+	plt.plot(history.history['acc'])
+	plt.title('Model accuracy')
+	plt.ylabel('Accuracy')
+	plt.xlabel('Batch')
+	plt.legend(['Train', 'Test'], loc='upper left')
+	print("Saving Figure To: " + args["progress"])
+plt.savefig(args["progress"])
