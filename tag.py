@@ -125,15 +125,18 @@ def getNames():
 test_color = lambda c, u, t, b: c if not b else (0,255,0) if t == u else (0,0,255)
 def drawBoxes(vid,datetime,location,test=False):
 	if not curs: return
-	rows = curs.execute("SELECT frame,x,y,width,height,compid,userid,testid FROM records WHERE loc=? and datetime like ?",(location,datetime)).fetchall()
+	rows = curs.execute("SELECT frame,x,y,width,height,compid,userid,testid,confidence FROM records WHERE loc=? and datetime like ?",(location,datetime)).fetchall()
 	colors = {}
 	names = getNames()
-	for f,x,y,w,h,c,u,t in rows:
+	for f,x,y,w,h,c,u,t,conf in rows: 
 		if u not in colors: colors[u] = (randint(0,255),randint(0,255),randint(0,255))
 		vid[f] = cv.rectangle(vid[f], (x, y), (x+w, y+h), test_color(colors[u],u,t,test), 2) 
 		vid[f] = cv.putText(vid[f], "Tracking ID: " + str(c),(x,y),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
 		if not args["names"]: vid[f] = cv.putText(vid[f], "User ID: " + str(u),(x,y+h),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
 		else: vid[f] = cv.putText(vid[f], names[u],(x,y+h),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
+		if test: vid[f] = cv.putText(vid[f], str(int(conf*1000)/10)+"%", (x,y+h+22),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
+	for i in range(len(vid)):
+		vid[i] = cv.putText(vid[i], "Frame " + str(i), (0,22),cv.FONT_HERSHEY_SIMPLEX,1.0,color=(0,255,0), thickness=2) 
 	return vid
 
 def writeVideo(vid,filepath,fps):
@@ -163,7 +166,7 @@ if __name__ == "__main__":
 	connect()
 	print(conn,curs)
 	while True: 
-		inp = int(input("0 To Tag\n1 To Visualize\n2 To Reset\n3 To See Registered Users\n4 To Add New User\n5 To Update Existing User\n6 To Save To JSON\n7 To Load JSON\n8 To Overlay\n-1 To Save and Quit\n-2 To Save\nCommand: "))
+		inp = int(input("0 To Tag\n1 To Visualize\n2 To Reset\n3 To See Registered Users\n4 To Add New User\n5 To Update Existing User\n6 To Save To JSON\n7 To Load JSON\n8 To Overlay Training Data\n9 To Overlay Test Data\n-1 To Save and Quit\n-2 To Save\nCommand: "))
 		if(inp == -1): break 
 		elif(inp == -2): conn.commit()
 		elif(inp == 0): tag_inp()

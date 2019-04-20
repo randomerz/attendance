@@ -86,7 +86,7 @@ def test(model):
 	else: loc = input("Location: ")
 	conn, curs = connect()
 	if not curs: return
-	rows = curs.execute("select image, userid from records where loc=? and datetime like ? and userid > 0",(loc,datestr)).fetchall()
+	rows = curs.execute("select image, userid from records where loc=? and datetime like ?",(loc,datestr)).fetchall()
 	data_rows = [(pathToImg(fix_path(row[0])), [row[1]-1]) for row in rows]
 	data = np.concatenate([[row[0]] for row in data_rows],axis=0)
 	labels = keras.utils.to_categorical(np.array([row[1] for row in data_rows]), num_classes)
@@ -94,7 +94,8 @@ def test(model):
 	print(ret.shape)
 	print(ret[0], np.argmax(ret[0]))
 	for i, row in enumerate(rows):
-		curs.execute("update records set testid=? where image=?", (int(np.argmax(ret[i])+1), row[0])).fetchall()
+		tid = int(np.argmax(ret[i]))
+		curs.execute("update records set testid=?, confidence=? where image=?", (tid+1,float(ret[i][tid]), row[0]))
 	conn.commit()
 	close(conn)
 	return ret
@@ -120,4 +121,4 @@ if(args["train"]):
 	plt.xlabel('Batch')
 	plt.legend(['Train', 'Test'], loc='upper left')
 	print("Saving Figure To: " + args["progress"])
-plt.savefig(args["progress"])
+	plt.savefig(args["progress"])
