@@ -8,4 +8,4 @@ imdata
 *.avi
 *.db
 *.json
-models/match.h5
+match.h5
