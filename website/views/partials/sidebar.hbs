@@ -1,0 +1,56 @@
+<nav class="z-depth-0 transparent">
+    <div class="nav-wrapper">
+        <a href="#" data-target="slide-out" class="sidenav-trigger show-on-large"><i class="small material-icons blue-text">menu</i></a>
+        <p class="centerhor black-text pageTitle"><strong>{{title}}</strong></p>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+        </ul>
+    </div>
+</nav>
+<ul id="slide-out" class="sidenav">
+    <li><div class="user-view">
+        {{#if profile}}
+        <a href="#user"><img class="circle" src="{{profile.picture}}"></a>
+        <a href="#name"><span class="name">{{profile.display_name}}</span></a>
+        <a href="#email"><span id="email" class="email">{{profile.tj_email}}</span></a>
+        {{else}}
+        <a href="#user"><img class="circle" src="https://user.tjhsst.edu/2019ssaxena/home/css/portrait_placeholder.png"></a>
+        <a href="#name"><span class="name">John Doe</span></a>
+        <a href="#email"><span id="email" class="email">2019jdoe@tjhsst.edu</span></a>
+        {{/if}}
+    </div></li>
+    <li><ul class="collapsible collapsible-accordion">
+        <li>
+            <a class="collapsible-header">Profile</a>
+            <div class="collapsible-body">
+              <ul>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/secure/">My Profile</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/secure/signups">My Signups</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/secure/announce">My Announcements</a></li>
+              </ul>
+            </div>
+        </li>
+    </ul></li>
+    <li><ul class="collapsible collapsible-accordion">
+        <li>
+            <a class="collapsible-header">Site Links</a>
+            <div class="collapsible-body">
+              <ul>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/stateBorders">States Border Lab</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/statesGame">States Game</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/survey">Survey</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/scrabble">Scrabble</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/countdown">Countdown</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/clicker">Samosa Clicker</a></li>
+                <li><a href="https://user.tjhsst.edu/2019ssaxena/vchat">Video Chat</a></li>
+              </ul>
+            </div>
+        </li>
+    </ul></li>
+    <li><a class="collapsible-header" href='https://user.tjhsst.edu/2019ssaxena/home'>Go To Homepage</a></li>
+    <li><a class="collapsible-header" href='https://user.tjhsst.edu/2019ssaxena/aboutMe'>About The Developer</a></li>
+    {{# if profile}}
+        <li><a class="collapsible-header" href="https://user.tjhsst.edu/2019ssaxena/logout?redir=secure">Logout</a></li>
+    {{else}}
+        <li><a class="collapsible-header" href="https://user.tjhsst.edu/2019ssaxena/logout?redir=secure">Login</a></li>
+    {{/if}}
+</ul>

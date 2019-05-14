@@ -1,0 +1,111 @@
+{{#> layouts/base }}
+	{{#*inline "links"}}
+	{{/inline}}
+	{{#*inline "content"}}
+	<div id="hero" class="row">
+		<div class="col s6">
+			<video id="read_vid" width="100%" loop autoplay>
+         	<source id="read_vid_src" src="https://user.tjhsst.edu/2019ssaxena/landing/css/class_anonymous_overlay.mp4" type="video/mp4">
+         	Your browser does not support the video tag.
+         </video>
+			<video id="write_vid" width="100%" loop autoplay>
+         	<source id="write_vid_src" src="https://user.tjhsst.edu/2019ssaxena/landing/css/class_anonymous_overlay.mp4" type="video/mp4">
+         	Your browser does not support the video tag.
+         </video>
+		</div>
+		<div class="col s6">
+			<div class="row">
+				<div class="col s3">
+					<p>Input Video</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="/videos/video.mp4" id="inp_vid" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Raw Image Database</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="imdata" id="imdir" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>SQL Database</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="records.db" id="data" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Location</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="TJ200C" id="loc" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Date</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="2019-05-12" id="dtime" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Classification Model</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="models/class.h5" id="inp_mod" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Overlayed Video</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="/videos/video_overlay.mp4" id="con_vid" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Frames Per Second</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="30" id="fps" type="int">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Save Bounding Boxes</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="boxes/boxes.pkl" id="sav_box" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s3">
+					<p>Load Bounding Boxes</p>
+				</div>
+				<div class="col s9">
+          		<input placeholder="boxes/boxes.pkl" id="lo_box" type="text">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col s6">
+					<a class="waves-effect waves-light btn centerel btn-flat" onclick="test()">Test</a>
+				</div>
+				<div class="col s6">
+					<a class="waves-effect waves-light btn centerel btn-flat" onclick="train()">Train</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	{{/inline}}
+	{{#*inline "scripts"}}
+	<script type="text/javascript" src="/run/js/script.js"></script> 
+	{{/inline}}
+{{/layouts/base}}
