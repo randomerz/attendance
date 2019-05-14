@@ -36,13 +36,16 @@ function fixPath(data){
 function test(){
 	console.log("Testing With Data")
 	console.log(getData())
-	setVideo("read_vid", "read_vid_src", getData()['inp_vid'])
+	inpData = getData()
+	setVideo("read_vid", "read_vid_src", inpData['inp_vid'])
 	setVideo("write_vid", "write_vid_src", document.getElementById("write_vid_src").src)
+	conVid = inpData["con_vid"]
 	$.get({
 		url: '/run/test',
-		data: fixPath(getData()),
+		data: fixPath(inpData),
 		success: function(data){
 			console.log(data)
+			setVideo("write_vid", "write_vid_src", conVid)
 		},
 		error: function(data){
 			console.log(data)

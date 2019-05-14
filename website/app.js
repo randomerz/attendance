@@ -6,14 +6,12 @@ var app = express();
 var path = require('path');
 var hbs = require( 'express-handlebars' )//require('hbs');
 var cookieSession = require('cookie-session')
-var simpleoauth2 = require("simple-oauth2");
 var request = require('request');
 const fs = require('fs')
 var mysql = require('mysql');
 var server =  require('http').createServer(app);
-var io = require('socket.io').listen(server); 
 var os = require('os')
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 server.listen(process.env.PORT || 8080); 
 // -------------- express initialization -------------- //
 app.set('port', process.env.PORT || 8080 );
@@ -37,7 +35,7 @@ app.use('/home/js', express.static(path.join(__dirname, 'js')))
 app.use('/home/css', express.static(path.join(__dirname, 'css')))
 app.use('/run/js', express.static(path.join(__dirname, 'Run', 'js')))
 app.use('/css/css', express.static(path.join(__dirname, 'Run', 'css')))
-app.use('/videos', express.static(path.join(__dirname, '..', 'Videos')))
+app.use('/videos', express.static(path.join(__dirname, '..', 'videos')))
 // -------------- variable definition -------------- //
 var visitorCount = 0; 
 // -------------- express 'get' handlers -------------- //
@@ -56,15 +54,15 @@ app.get('/run', function(req,res){
 app.get('/run/test', function(req,res){
 	q = req.query
 	console.log("TEST: Creating Child Process")
-	const child = spawn('bash', ['../read_and_classify_web.sh', q['inp_vid'], q['sav_box'], q['out_vid'], q['ove_vid'], q['con_vid'], q['imdir'], q['data'], q['loc'], q['fps'], q['dtime'], q['inp_mod']]);
+	const child = spawn('bash', ['../read_and_classify_web.sh', q['inp_vid'], q['sav_box'], q['out_vid'], q['ove_vid'], q['con_vid'], q['imdir'], q['data'], q['loc'], q['fps'], q['dtime'], q['inp_mod'], q['lo_box']]);
 	//child.stdout.setEncoding('utf8');
 	child.stdout.on('data', (chunk) => {
 		console.log("TEST: " + chunk);
 	});
 	child.on('close', (code) => {
 		console.log('TEST: child process exited');
+		res.send(req.query);
 	});
-	res.send(req.query);
 });
 app.get('/run/train', function(req,res){
 	res.send(req.query);

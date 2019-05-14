@@ -10,14 +10,18 @@ loc=$8 #"TJ200C"
 fps=$9 #60
 dtime=${10} #"2019-05-12"
 inp_mod=${11} #"models/class.h5"
-
 echo "Changing Working Directory To attendance"
 cd ..
 
 source ~/miniconda3/etc/profile.d/conda.sh
 
 echo "Detecting Faces In Video " $inp_vid " taken at " $loc " and taken in " $fps " frames per second"
-python3 detection.py --video $inp_vid --track --no-display --save-boxes $sav_box --save-video $sav_vid --imagedir $imdir --database $data --location $loc --fps $fps
+if [ ${12} == "" ]; then 
+	python3 detection.py --video $inp_vid --track --no-display --save-boxes $sav_box --save-video $sav_vid --imagedir $imdir --database $data --location $loc --fps $fps
+else
+	echo "With Boxes " ${12}
+	python3 detection.py --video $inp_vid --track --no-display --save-boxes $sav_box --save-video $sav_vid --boxes ${12} --imagedir $imdir --database $data --location $loc --fps $fps	
+fi
 echo "Saved Data to " $data " and raw images to " $imdir " and boxes at " $sav_box
 
 echo "Classifying Faces From Database " $data " taken on " $dtime " at " $loc " with model " $inp_mod
@@ -30,6 +34,9 @@ conda deactivate
 
 echo "Overlaying Video " $inp_vid " taken on " $dtime " at " $loc " in " $fps " frames per second to " $ove_vid
 python3 tag.py --database $data --datetime $dtime --location $loc --names --option 9 --video $inp_vid --save-video $ove_vid --fps $fps
+
+echo "Removing Video " $con_vid " To Prevent Confirmation Message"
+rm $con_vid
 
 echo "Converting Video " $ove_vid " To " $con_vid
 ffmpeg -i $ove_vid $con_vid
