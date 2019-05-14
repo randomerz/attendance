@@ -1,14 +1,14 @@
 #!/bin/bash
-inp_vid="videos/class_04_25_19_1sec.mp4"
-sav_box="boxes/class_04_25_19_1sec.pkl"
-sav_vid="videos/class_04_25_19_1sec_out.mp4"
-ove_vid="videos/class_04_25_19_1sec_overlay.avi"
-con_vid="videos/class_04_25_19_1sec_overlay.mp4"
-imdir="images"
+inp_vid="videos/class_04_25_19_halfsec_1080.mp4"
+sav_box="boxes/class_04_25_19_halfsec_1080.pkl"
+sav_vid="videos/class_04_25_19_halfsec_1080_out.mp4"
+ove_vid="videos/class_04_25_19_halfsec_1080_overlay.avi"
+con_vid="videos/class_04_25_19_halfsec_1080_overlay.mp4"
+imdir="imdata"
 data="records.db"
 loc="TJ200C"
 fps=60
-dtime="2019-05-10"
+dtime="2019-05-12"
 inp_mod="models/class.h5"
 
 source ~/miniconda3/etc/profile.d/conda.sh

@@ -74,7 +74,7 @@ def vis_inp():
 def reset():
 	if not curs: return
 	curs.execute("drop table records")
-	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int,testid int)")	
+	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int,testid int, confidence float)")	
 	return True
 
 def vis_user():

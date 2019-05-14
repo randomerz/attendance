@@ -195,7 +195,7 @@ def cropImage(frame, bboxes, imagedir, camid, cursor, i):
 		cv.imwrite(impath, crop_img)
 		w = int(box.coord[2] - box.coord[0])
 		h = int(box.coord[3] - box.coord[1])
-		if cursor: cursor.execute("insert into records values(?,?,?,?,?,?,?,?,?,?,?,?)",(impath,str(tod),camid,crop_img.size,box.id,-1,w,h,int(h/w*100)/100,int(box.coord[0]),int(box.coord[1]),i))
+		if cursor: cursor.execute("insert into records values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(impath,str(tod),camid,crop_img.size,box.id,-1,w,h,int(h/w*100)/100,int(box.coord[0]),int(box.coord[1]),i,-1,-1))
 
 def cropVideo(vid,bboxes,imagedir,camid,sql=None):
 	print("Generating Raw Image Database")	
