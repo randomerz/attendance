@@ -9,3 +9,4 @@ imdata
 *.db
 *.json
 match.h5
+website/node_modules

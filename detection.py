@@ -12,6 +12,7 @@ import argparse
 import sqlite3
 import datetime
 import hashlib
+import progressbar
 from progress.bar import Bar
 from random import random
 try:
@@ -21,7 +22,11 @@ except ImportError:
 	def token_hex(nbytes=None):
 		return urandom(nbytes).hex()
 print('Imported External Libraries')
-
+widgets=[
+    ' [', progressbar.Timer(), '] ',
+    progressbar.Bar(),
+    ' (', progressbar.ETA(), ') ',
+]
 ### CMD LINE ARGS ###
 ap = argparse.ArgumentParser()
 ap.add_argument('-v', '--video',help='Path to Video file')
@@ -108,12 +113,11 @@ def readVideo(fname, n=-1, s=1):
 
 def getVideoBoxes(vid):
 	print("Computing Video Boxes")
-	bar = Bar('Computing Frames', max=len(vid))
+	bar = progressbar.ProgressBar(max_value=len(vid), widgets=widgets)
 	boxes = []
-	for frame in vid: 
+	for j,frame in enumerate(vid): 
 		boxes.append([Box(i) for i in getImageBoxes(frame)])
-		bar.next()
-	bar.finish()
+		bar.update(j)
 	return boxes 
 
 def drawBoxes(vid,boxes):
@@ -191,7 +195,7 @@ def cropImage(frame, bboxes, imagedir, camid, cursor, i):
 		cv.imwrite(impath, crop_img)
 		w = int(box.coord[2] - box.coord[0])
 		h = int(box.coord[3] - box.coord[1])
-		if cursor: cursor.execute("insert into records values(?,?,?,?,?,?,?,?,?,?,?,?)",(impath,str(tod),camid,crop_img.size,box.id,-1,w,h,int(h/w*100)/100,int(box.coord[0]),int(box.coord[1]),i))
+		if cursor: cursor.execute("insert into records values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(impath,str(tod),camid,crop_img.size,box.id,-1,w,h,int(h/w*100)/100,int(box.coord[0]),int(box.coord[1]),i,-1,-1))
 
 def cropVideo(vid,bboxes,imagedir,camid,sql=None):
 	print("Generating Raw Image Database")	
@@ -246,7 +250,4 @@ if __name__ == "__main__":
 	else: print("Saving Video Disabled")
 	if not args["no_display"]: showVideo(vid)
 	else: print("Display Disabled")
-	
-
-
 	

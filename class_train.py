@@ -30,11 +30,17 @@ def close(conn):
 	if not conn: return
 	conn.close()
 
+def find_num_classes():
+	conn, curs = connect()
+	ret = int(curs.execute("select count(*) from users where userid > 0").fetchall()[0][0])
+	close(conn)
+	return ret
+
 fix_path = lambda p: os.path.join('tiny',p)
 
 batch_size = 64
 num_channels = 3
-num_classes = 8
+num_classes = find_num_classes()
 epoch_size = 64
 s = 64
 
@@ -47,7 +53,7 @@ def get_model():
 	conv_3 = Conv2D(192,(3,3))(conv_2)
 	conv_4 = Conv2D(192,(3,3))(conv_3)
 	conv_5 = Conv2D(256,(3,3))(conv_4)
-	conv_5 = MaxPooling2D(pool_size=(2,2))(conv_4)
+	conv_5 = MaxPooling2D(pool_size=(2,2))(conv_5)
 	vision_model = Model(face_img, conv_5)
 
 	face = Input(shape=(s,s,num_channels))

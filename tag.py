@@ -10,6 +10,10 @@ ap.add_argument('-d', '--database', help="Path To SQLite Database", required=Tru
 ap.add_argument('-t', '--datetime', help="Autofill Datetime")
 ap.add_argument('-l', '--location', help="Autofill Location")
 ap.add_argument('-n', '--names', help="Use Names", action="store_true", default=False)
+ap.add_argument('-o', '--option', help="Override UI", type=int)
+ap.add_argument('-f', '--fps', help="Frames Per Second", type=int)
+ap.add_argument('-v','--video', help="Input Video For Overlay")
+ap.add_argument('-s','--save-video',help="Output Video For Overlay")
 args = vars(ap.parse_args())
 conn = None
 curs = None
@@ -67,10 +71,15 @@ def vis_inp():
 	vis(datestr, loc, compid)
 	return True
 
-def reset():
+def reset(user=False):
 	if not curs: return
-	curs.execute("drop table records")
-	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int,testid int)")	
+	try: curs.execute("drop table records")
+	except: print("Records Table Not Found")
+	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int,testid int, confidence float)")	
+	if(user): 
+		try: curs.execute("drop table users")
+		except: print("Users Table Not Found")
+		curs.execute("CREATE TABLE users (userid int primary key, name text)")
 	return True
 
 def vis_user():
@@ -128,9 +137,13 @@ def drawBoxes(vid,datetime,location,test=False):
 	rows = curs.execute("SELECT frame,x,y,width,height,compid,userid,testid,confidence FROM records WHERE loc=? and datetime like ?",(location,datetime)).fetchall()
 	colors = {}
 	names = getNames()
-	for f,x,y,w,h,c,u,t,conf in rows: 
+	ove_color = False
+	for f,x,y,w,h,c,u,t,conf in rows:
+		if u == -1 and test: 
+			ove_color = True
+			u = t 
 		if u not in colors: colors[u] = (randint(0,255),randint(0,255),randint(0,255))
-		vid[f] = cv.rectangle(vid[f], (x, y), (x+w, y+h), test_color(colors[u],u,t,test), 2) 
+		vid[f] = cv.rectangle(vid[f], (x, y), (x+w, y+h), test_color(colors[u],u,t,test and not ove_color), 2) 
 		vid[f] = cv.putText(vid[f], "Tracking ID: " + str(c),(x,y),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
 		if not args["names"]: vid[f] = cv.putText(vid[f], "User ID: " + str(u),(x,y+h),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
 		else: vid[f] = cv.putText(vid[f], names[u],(x,y+h),cv.FONT_HERSHEY_SIMPLEX,1.0,color=colors[u],thickness=2)
@@ -150,14 +163,25 @@ def writeVideo(vid,filepath,fps):
 	for frame in vid: out.write(frame)
 	out.release()
 
+def dropDay():
+	if args["datetime"]: datestr = args["datetime"] + "%"
+	else: datestr = input("Date (yyyy-mm-dd): ")+"%"
+	if args["location"]: loc = args["location"]
+	else: loc = input("Location: ")
+	if not curs: return
+	curs.execute("DELETE FROM records WHERE loc=? and datetime like ?",(loc,datestr)).fetchall()
+	
 def overlay(test=False):
 	if args["datetime"]: datestr = args["datetime"] + "%"
 	else: datestr = input("Date (yyyy-mm-dd): ")+"%"
 	if args["location"]: loc = args["location"]
 	else: loc = input("Location: ")
-	fname = input("Video To Overlay: ")
-	oname = input("Video To Output: ")
-	fps = int(input("Frames Per Second: "))
+	if args["video"]: fname = args["video"]
+	else: fname = input("Video To Overlay: ")
+	if args["save_video"]: oname = args["save_video"]
+	else: oname = input("Video To Output: ")
+	if args["fps"]: fps = args["fps"]
+	else: fps = int(input("Frames Per Second: "))
 	vid = readVideo(fname)
 	vid = drawBoxes(vid,datestr,loc,test)
 	writeVideo(vid,oname,fps)		
@@ -165,8 +189,9 @@ def overlay(test=False):
 if __name__ == "__main__":
 	connect()
 	print(conn,curs)
-	while True: 
-		inp = int(input("0 To Tag\n1 To Visualize\n2 To Reset\n3 To See Registered Users\n4 To Add New User\n5 To Update Existing User\n6 To Save To JSON\n7 To Load JSON\n8 To Overlay Training Data\n9 To Overlay Test Data\n-1 To Save and Quit\n-2 To Save\nCommand: "))
+	while True:
+		if args["option"]: inp = args["option"]  
+		else: inp = int(input("0 To Tag\n1 To Visualize\n2 To Reset\n3 To See Registered Users\n4 To Add New User\n5 To Update Existing User\n6 To Save To JSON\n7 To Load JSON\n8 To Overlay Training Data\n9 To Overlay Test Data\n10 To Drop a Day\n11 To Hard Reset\n-1 To Save and Quit\n-2 To Save\nCommand: "))
 		if(inp == -1): break 
 		elif(inp == -2): conn.commit()
 		elif(inp == 0): tag_inp()
@@ -179,5 +204,8 @@ if __name__ == "__main__":
 		elif(inp == 7): loJSON()
 		elif(inp == 8): overlay() 	
 		elif(inp == 9): overlay(True)
+		elif(inp == 10): dropDay()
+		elif(inp == 11): reset(True)
+		if args["option"]: break
 	close()
 
