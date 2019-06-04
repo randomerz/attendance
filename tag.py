@@ -71,10 +71,15 @@ def vis_inp():
 	vis(datestr, loc, compid)
 	return True
 
-def reset():
+def reset(user=False):
 	if not curs: return
-	curs.execute("drop table records")
+	try: curs.execute("drop table records")
+	except: print("Records Table Not Found")
 	curs.execute("CREATE TABLE records (image text primary key, datetime text, loc text, res int, compid int, userid int, width int, height int, hwratio double, x int, y int, frame int,testid int, confidence float)")	
+	if(user): 
+		try: curs.execute("drop table users")
+		except: print("Users Table Not Found")
+		curs.execute("CREATE TABLE users (userid int primary key, name text)")
 	return True
 
 def vis_user():
@@ -158,6 +163,14 @@ def writeVideo(vid,filepath,fps):
 	for frame in vid: out.write(frame)
 	out.release()
 
+def dropDay():
+	if args["datetime"]: datestr = args["datetime"] + "%"
+	else: datestr = input("Date (yyyy-mm-dd): ")+"%"
+	if args["location"]: loc = args["location"]
+	else: loc = input("Location: ")
+	if not curs: return
+	curs.execute("DELETE FROM records WHERE loc=? and datetime like ?",(loc,datestr)).fetchall()
+	
 def overlay(test=False):
 	if args["datetime"]: datestr = args["datetime"] + "%"
 	else: datestr = input("Date (yyyy-mm-dd): ")+"%"
@@ -178,7 +191,7 @@ if __name__ == "__main__":
 	print(conn,curs)
 	while True:
 		if args["option"]: inp = args["option"]  
-		else: inp = int(input("0 To Tag\n1 To Visualize\n2 To Reset\n3 To See Registered Users\n4 To Add New User\n5 To Update Existing User\n6 To Save To JSON\n7 To Load JSON\n8 To Overlay Training Data\n9 To Overlay Test Data\n-1 To Save and Quit\n-2 To Save\nCommand: "))
+		else: inp = int(input("0 To Tag\n1 To Visualize\n2 To Reset\n3 To See Registered Users\n4 To Add New User\n5 To Update Existing User\n6 To Save To JSON\n7 To Load JSON\n8 To Overlay Training Data\n9 To Overlay Test Data\n10 To Drop a Day\n11 To Hard Reset\n-1 To Save and Quit\n-2 To Save\nCommand: "))
 		if(inp == -1): break 
 		elif(inp == -2): conn.commit()
 		elif(inp == 0): tag_inp()
@@ -191,6 +204,8 @@ if __name__ == "__main__":
 		elif(inp == 7): loJSON()
 		elif(inp == 8): overlay() 	
 		elif(inp == 9): overlay(True)
+		elif(inp == 10): dropDay()
+		elif(inp == 11): reset(True)
 		if args["option"]: break
 	close()
 
