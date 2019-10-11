@@ -12,7 +12,7 @@ import argparse
 import sqlite3
 import datetime
 import hashlib
-import progressbar
+import progressbar #pip3 install progressbar2
 from progress.bar import Bar
 from random import random
 try:
@@ -100,6 +100,8 @@ def readVideo(fname, n=-1, s=1):
 	print("Reading Video", fname)
 	vid = []
 	cap = cv.VideoCapture(fname)
+	if not cap:
+		print('Warning: video not opened')
 	i = -1
 	while cap.isOpened():
 		if len(vid) == n: break
@@ -116,8 +118,9 @@ def getVideoBoxes(vid):
 	bar = progressbar.ProgressBar(max_value=len(vid), widgets=widgets)
 	boxes = []
 	for j,frame in enumerate(vid): 
-		boxes.append([Box(i) for i in getImageBoxes(frame)])
 		bar.update(j)
+		boxes.append([Box(i) for i in getImageBoxes(frame)])
+	bar.update(len(vid))
 	return boxes 
 
 def drawBoxes(vid,boxes):
@@ -173,8 +176,8 @@ def writeBoxes(boxes,filepath):
 def writeVideo(vid,filepath):
 	print("Saving Video To", filepath)
 	if len(vid) == 0: return
-	fourcc = cv.VideoWriter_fourcc(*'DIV3') 
-	#fourcc = 0x7634706d
+	#fourcc = cv.VideoWriter_fourcc(*'DIV3') 
+	fourcc = 0x7634706d
 	print(vid[0].shape[0], vid[0].shape[1])
 	out = cv.VideoWriter(filepath,fourcc, args["fps"], (vid[0].shape[1],vid[0].shape[0]))
 	if not out.isOpened(): print("Video Writer Is Not Opened")
