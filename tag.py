@@ -43,7 +43,7 @@ def vis(datestr, location, compid):
 	for row in rows:
 		img = cv.imread(row[0])
 		cv.imshow("image", img)
-		cv.waitKey(0)
+		cv.waitKey(250)
 	cv.destroyAllWindows()	
 	os.chdir('..')
 
