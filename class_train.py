@@ -34,6 +34,7 @@ def find_num_classes():
 	conn, curs = connect()
 	ret = int(curs.execute("select count(*) from users where userid > 0").fetchall()[0][0])
 	close(conn)
+	print(ret)
 	return ret
 
 fix_path = lambda p: os.path.join('tiny',p)
@@ -64,6 +65,7 @@ def get_model():
 	full_2 = Dense(1000,activation='relu')(full_1)
 	full_3 = Dense(num_classes,activation='softmax')(full_2)
 	return Model(face, full_3)
+
 def pathToImg(path):
 	img = Image.open(path)
 	img.load()
@@ -83,6 +85,7 @@ def gen_data():
 		rows = sel_data(batch_size)
 		data = np.concatenate([[row[0]] for row in rows],axis=0)
 		labels = keras.utils.to_categorical(np.array([row[1] for row in rows]), num_classes)
+		print(data.shape)
 		yield (data,labels)
 
 def test(model):
