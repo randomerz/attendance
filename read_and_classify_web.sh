@@ -12,7 +12,7 @@ dtime=${10} #"2019-05-12"
 inp_mod=${11} #"models/class.h5"
 echo "Changing Working Directory To attendance"
 cd ..
-
+#python3 detection.py --video vids/me.mp4 --track --save-boxes boxes/test.pkl --save-video /vids/me_out.mp4 --imagedir imdata --database records.db --location "TJ202"
 source ~/miniconda3/etc/profile.d/conda.sh
 
 echo "Detecting Faces In Video " $inp_vid " taken at " $loc " and taken in " $fps " frames per second"

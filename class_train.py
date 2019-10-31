@@ -34,7 +34,6 @@ def find_num_classes():
 	conn, curs = connect()
 	ret = int(curs.execute("select count(*) from users where userid > 0").fetchall()[0][0])
 	close(conn)
-	print(ret)
 	return ret
 
 fix_path = lambda p: os.path.join('tiny',p)
