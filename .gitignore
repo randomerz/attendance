@@ -1,9 +1,2 @@
-*.jpg
-*.png
-*.pyc
 deep-head-pose
-*.avi
-*.db
-*.json
-match.h5
 website/node_modules
