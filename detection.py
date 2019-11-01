@@ -188,9 +188,12 @@ def cropImage(frame, bboxes, imagedir, camid, cursor, i):
 	if camid not in os.listdir(imagedir): os.system('mkdir "' + os.path.join(imagedir,camid) + '"') #Fix Broken Path
 	date = str(datetime.datetime.today()).split(' ')[0]	#Get Date
 	if date not in os.listdir(os.path.join(imagedir,camid)): os.system('mkdir "' + os.path.join(imagedir,camid,date) + '"') #Fix Broken Path
+	boxcount = 0
 	for box in bboxes:
 		if box.coord == None: continue
+		print('a')
 		if box.id == None: continue
+		boxcount += 1
 		crop_img = frame[int(box.coord[1]):int(box.coord[3]) , int(box.coord[0]):int(box.coord[2])] 
 		if str(box.id) not in os.listdir(os.path.join(imagedir,camid,date)): os.system('mkdir "' + os.path.join(imagedir,camid,date,str(box.id)) + '"') #Fix Broken Path
 		tod = datetime.datetime.today()
@@ -199,6 +202,7 @@ def cropImage(frame, bboxes, imagedir, camid, cursor, i):
 		w = int(box.coord[2] - box.coord[0])
 		h = int(box.coord[3] - box.coord[1])
 		if cursor: cursor.execute("insert into records values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",(impath,str(tod),camid,crop_img.size,box.id,-1,w,h,int(h/w*100)/100,int(box.coord[0]),int(box.coord[1]),i,-1,-1))
+	print('Added %i boxes to database' % boxcount)
 
 def cropVideo(vid,bboxes,imagedir,camid,sql=None):
 	print("Generating Raw Image Database")	
