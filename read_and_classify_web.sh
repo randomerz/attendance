@@ -24,6 +24,7 @@ else
 fi
 echo "Saved Data to " $data " and raw images to " $imdir " and boxes at " $sav_box
 
+#python3 class_train.py --database records.db --datetime "2019-11-01" --location "TJ202" --train
 echo "Classifying Faces From Database " $data " taken on " $dtime " at " $loc " with model " $inp_mod
 conda activate sys
 python3 class_train.py --database $data --datetime $dtime --location $loc --load $inp_mod --test 
