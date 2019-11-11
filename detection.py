@@ -142,7 +142,7 @@ def match(prev,curr,runid,frame=0):
 		prev += [Box(None,runid-i) for i in range(0,lc-lp)]
 	cmat = [[-1*c.IoU(p) for p in prev] for c in curr]
 	matches = m.compute(cmat)
-	for c,p in matches: curr[c].setId(prev[p].id,color=prev[p].color)	
+	for c,p in matches: curr[c].setId(prev[p].id,color=prev[p].color)
 	curr = curr[0:lc]
 	prev = prev[0:lp]
 	return runid, curr, prev
