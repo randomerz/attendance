@@ -135,6 +135,7 @@ def drawBoxes(vid,boxes):
 def match(prev,curr,runid,frame=0):
 	lc = len(curr)
 	lp = len(prev)
+	print('lp', lp, 'lc', lc)
 	if lc < lp: 
 		curr += [Box(None) for i in range(0,lp-lc)] #Old Faces Not Detected
 	elif lp < lc: #New Faces Detected
