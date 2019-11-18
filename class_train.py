@@ -84,7 +84,6 @@ def gen_data():
 		rows = sel_data(batch_size)
 		data = np.concatenate([[row[0]] for row in rows],axis=0)
 		labels = keras.utils.to_categorical(np.array([row[1] for row in rows]), num_classes)
-		print(num_classes)
 		yield (data, labels)
 
 def test(model):
@@ -116,6 +115,7 @@ except Exception as e:
 	recog_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 print('doing stuff')
+print('batch size', batch_size, 'num channels', num_channels, 'num classes', num_classes, 'epoch size', epoch_size, 's', s)
 gendata = gen_data()
 
 if(args["train"]): history = recog_model.fit_generator(gendata,use_multiprocessing=True,steps_per_epoch=ceil(epoch_size/batch_size),epochs=args["epochs"]*50)
