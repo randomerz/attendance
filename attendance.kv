@@ -1,0 +1,58 @@
+#:kivy 1.0.9
+
+<AttendanceApp>:
+	player: video_player
+
+
+<MainContainer>:
+	player: video_player
+
+	VideoPlayer:
+		id: video_player
+        size: root.size
+        source: "vids/boys_geo.mp4"
+
+
+<SideContainer>:
+	side_content: lower_cont
+
+	Button:
+		size_hint: 1, .15
+		text: "Students"
+	Button:
+		size_hint: 1, .15
+		text: "Attendance"
+	Button:
+		size_hint: 1, .15
+		text: "Training"
+	BoxLayout:
+		id: lower_cont
+
+
+<StudentSidebar>:
+	spacing: 10
+	Button:
+		text: "Add Student"
+	Button:
+		text: "Remove Student"
+
+<SelectableLabel>:
+    # Draw a background to indicate selection
+    canvas.before:
+        Color:
+            rgba: (.0, 0.9, .1, .3) if self.selected else (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<StudentMain>:
+    viewclass: 'SelectableLabel'
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(56)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: True
+        touch_multiselect: True
