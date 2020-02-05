@@ -6,6 +6,8 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.tabbedpanel import TabbedPanel
+from kivy.uix.tabbedpanel import TabbedPanelHeader
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
@@ -13,8 +15,8 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.videoplayer import VideoPlayer
 from kivy.uix.video import Video
-from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
 from kivy.uix.popup import Popup
+from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
 from kivy.core.window import Window
 
 import os
@@ -63,28 +65,18 @@ class StudentSidebar(BoxLayout):
 	pass
 
 
-class StudentMain(ScrollView):
+class StudentMain(TabbedPanel):
 	def __init__(self, **kwargs):
 		super(StudentMain, self).__init__(**kwargs)
 
-		layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
-		# in case of no elements
-		layout.bind(minimum_height=layout.setter('height'))
-
-		for i in db_curs[0].execute('select * from users'):
-			btn = StudentElement(size_hint_y=None, height=40)
-			btn.student_label = str(i[0]) + '. ' + i[1] # number. student name
-			layout.add_widget(btn)
-		'''
-		for i in range(30):
-			btn = StudentElement(size_hint_y=None, height=40)
-			btn.student_label = str(i + 1) + '. Student Name'
-			layout.add_widget(btn)
-		'''
-
-		self.clear_widgets()
-		# add gridlayout with all the elements to scroll view (SV can only have 1 widget)
-		self.add_widget(layout)
+		self.default_tab_text = 'Welcome!'
+		self.default_tab.content = Label(text='Welcome to CAT System!')
+		
+		self.class_tabs = []
+		for i in range(len(db_curs)):
+			tab = TabbedPanelHeader(text='Class %i' % (i + 1))
+			tab.content = StudentList()
+			self.add_widget(tab)
 
 
 
@@ -108,10 +100,29 @@ class TrainMain(BoxLayout):
 # Sidebar Widgets
 #
 
+class StudentList(ScrollView):
+	def __init__(self, **kwargs):
+		super(StudentList, self).__init__(**kwargs)
 
-class LoadFileDialog(FloatLayout):
-	load = ObjectProperty(None)
-	cancel = ObjectProperty(None)
+		layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
+		# in case of no elements
+		layout.bind(minimum_height=layout.setter('height'))
+
+		for i in db_curs[0].execute('select * from users'):
+			btn = StudentElement(size_hint_y=None, height=40)
+			btn.student_label = str(i[0]) + '. ' + i[1] # number. student name
+			layout.add_widget(btn)
+		'''
+		for i in range(30):
+			btn = StudentElement(size_hint_y=None, height=40)
+			btn.student_label = str(i + 1) + '. Student Name'
+			layout.add_widget(btn)
+		'''
+
+		self.clear_widgets()
+		# add gridlayout with all the elements to scroll view (SV can only have 1 widget)
+		self.add_widget(layout)
+
 
 #
 # Content Widgets
@@ -121,8 +132,22 @@ class StudentElement(BoxLayout):
 	student_label = StringProperty('TEMP')
 
 
+#
+# Dialogue
+#
+
+class LoadFileDialog(FloatLayout):
+	load = ObjectProperty(None)
+	cancel = ObjectProperty(None)
+
+
 class LoadDetectDialog(FloatLayout):
 	submit = ObjectProperty(None)
+	cancel = ObjectProperty(None)
+
+
+class CreateClassDialog(FloatLayout):
+	create = ObjectProperty(None)
 	cancel = ObjectProperty(None)
 
 #
@@ -202,6 +227,14 @@ class AttendanceApp(App):
 		self._file_popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
 		self._file_popup.open()
 
+	def dismiss_create_class_popup(self):
+		self._create_class_popup.dismiss()
+
+	def show_create_class(self):
+		content = CreateClassDialog(create=self.create_new_class, cancel=self.dismiss_create_class_popup)
+		self._create_class_popup = Popup(title="Create New Class", content=content, size_hint=(0.9, 0.9))
+		self._create_class_popup.open()
+
 	def dismiss_detect_popup(self):
 		self._detect_popup.dismiss()
 
@@ -219,6 +252,9 @@ class AttendanceApp(App):
 	def load(self, path, filename):
 		self.switch_video_file(os.path.join(path, filename[0]))
 		self.dismiss_file_popup()
+
+	def create_new_class(self):
+		self.dismiss_create_class_popup()
 
 	# Content
 

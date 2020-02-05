@@ -43,9 +43,10 @@
 	spacing: 10
 	orientation: 'vertical'
 	Button:
-		text: "Add Student"
+		text: "Add Class"
+		on_release: app.show_create_class()
 	Button:
-		text: "Remove Student"
+		text: "Remove Class"
 
 
 <VideoSidebar>:
@@ -78,6 +79,11 @@
 #
 # Main Widgets
 #
+
+<StudentList>:
+	pos_hint: {'right': 1}
+	size_hint: .9, 1
+
 
 <StudentElement>:
 	Label:
@@ -118,6 +124,79 @@
 			Button:
 				text: "Load"
 				on_release: app.load(filechooser.path, filechooser.selection)
+
+
+<CreateClassDialog>:
+	BoxLayout:
+		size: root.size
+		pos: root.pos
+		orientation: "vertical"
+
+		BoxLayout:
+			orientation: "horizontal"
+
+			BoxLayout:
+				orientation: "vertical"
+
+				Label:
+					height: 40
+					size_hint_y: None
+					text: "Student List"
+
+				ScrollView:
+					Label:
+						text: "test"
+
+			BoxLayout:
+				orientation: "vertical"
+					
+				TextInput:
+					height: 40
+					size_hint_y: None
+					id: text_class_name
+					text: "Class TEMP"
+				
+				BoxLayout:
+					orientation: "vertical"
+					height: 160
+					size_hint_y: None
+
+					GridLayout:
+						cols: 2
+						row_default_height: 50
+						row_force_default: True
+						
+						Label: 
+							text: "Name"
+						TextInput:
+							id: text_student_name
+							text: ""
+							
+						Button:
+							text: "Remove Student"
+							on_release: root.cancel()
+							
+						Button:
+							text: "Add Student"
+							on_release: root.cancel()
+
+					Button:
+						height: 60
+						size_hint_y: None
+						text: "Import Class from Text File"
+		
+		BoxLayout:
+			size_hint_y: None
+			height: 30
+			Button:
+				text: "Cancel"
+				on_release: root.cancel()
+
+			Button:
+				text: "Load"
+				#on_release: app.load(filechooser.path, filechooser.selection)
+
+
 
 
 <LoadDetectDialog>:
