@@ -20,6 +20,32 @@ from kivy.core.window import Window
 import os
 import subprocess
 import sys
+import sqlite3
+#
+# Python
+#
+
+db_cons, db_curs = [], []
+try:
+	# finding db files
+	db_paths = []
+	for root, dirs, files in os.walk('records'):
+		for file in files:
+			if '.db' in file:
+				db_paths.append(os.path.join(root, file))
+	# connect to dbs
+	for i in range(len(db_paths)):
+		db_cons.append(sqlite3.connect(db_paths[i]))
+		db_curs.append(db_cons[i].cursor())
+		for i in db_curs[i].execute('select * from users'):
+			print(i)
+except Exception as e:
+	print('Error!')
+	print(e)
+
+#
+# Kivy
+#
 
 #
 # Content and Sidebars
@@ -41,13 +67,20 @@ class StudentMain(ScrollView):
 	def __init__(self, **kwargs):
 		super(StudentMain, self).__init__(**kwargs)
 
-		layout = GridLayout(cols=1, spacing=10, size_hint_y=None)
+		layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
 		# in case of no elements
 		layout.bind(minimum_height=layout.setter('height'))
+
+		for i in db_curs[0].execute('select * from users'):
+			btn = StudentElement(size_hint_y=None, height=40)
+			btn.student_label = str(i[0]) + '. ' + i[1] # number. student name
+			layout.add_widget(btn)
+		'''
 		for i in range(30):
 			btn = StudentElement(size_hint_y=None, height=40)
-			btn.student_label = str(i) + '. Student Name'
+			btn.student_label = str(i + 1) + '. Student Name'
 			layout.add_widget(btn)
+		'''
 
 		self.clear_widgets()
 		# add gridlayout with all the elements to scroll view (SV can only have 1 widget)
