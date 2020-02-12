@@ -91,6 +91,7 @@
 		text: root.student_label
 		text_size: self.size
 		halign: 'left'	
+		valign: 'middle'
 
 
 <VideoMain>:
@@ -127,6 +128,9 @@
 
 
 <CreateClassDialog>:
+	list_widget: list_widget
+	text_student_name: text_student_name
+
 	BoxLayout:
 		size: root.size
 		pos: root.pos
@@ -143,47 +147,52 @@
 					size_hint_y: None
 					text: "Student List"
 
-				ScrollView:
-					Label:
-						text: "test"
+				CreateClassListWidget:
+					id: list_widget
 
 			BoxLayout:
 				orientation: "vertical"
-					
+
 				TextInput:
 					height: 40
 					size_hint_y: None
 					id: text_class_name
 					text: "Class TEMP"
 				
-				BoxLayout:
-					orientation: "vertical"
-					height: 160
-					size_hint_y: None
+				RelativeLayout:
+					pos: self.parent.pos
+					size: self.parent.size
 
-					GridLayout:
-						cols: 2
-						row_default_height: 50
-						row_force_default: True
-						
-						Label: 
-							text: "Name"
-						TextInput:
-							id: text_student_name
-							text: ""
-							
-						Button:
-							text: "Remove Student"
-							on_release: root.cancel()
-							
-						Button:
-							text: "Add Student"
-							on_release: root.cancel()
-
-					Button:
-						height: 60
+					BoxLayout:
+						orientation: "vertical"
+						height: 160
 						size_hint_y: None
-						text: "Import Class from Text File"
+						center_y: root.center_y
+
+						GridLayout:
+							cols: 2
+							row_default_height: 50
+							row_force_default: True
+							
+							Label: 
+								text: "Name"
+							TextInput:
+								id: text_student_name
+								text: ""
+								
+							Button:
+								text: "Remove Student"
+								on_release: list_widget.remove_student()
+								
+							Button:
+								id: submit_button
+								text: "Add Student"
+								on_release: list_widget.add_student(text_student_name.text)
+
+						Button:
+							height: 60
+							size_hint_y: None
+							text: "Import Class from Text File\n(Not Implemented)"
 		
 		BoxLayout:
 			size_hint_y: None
@@ -193,10 +202,24 @@
 				on_release: root.cancel()
 
 			Button:
-				text: "Load"
-				#on_release: app.load(filechooser.path, filechooser.selection)
+				text: "Create Class"
+				on_release: app.create_new_class(list_widget, text_class_name.text)
 
 
+<CreateClassStudentWidget>:
+    canvas.before:
+        Color:
+            rgba: (.0, 0.9, .1, .3) if self.selected else (.1, .1, .1, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    Label:
+    	text: root.name
+		text_size: self.size
+		halign: 'left'	
+		valign: 'middle'
+		x: 50
 
 
 <LoadDetectDialog>:

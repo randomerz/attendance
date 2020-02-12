@@ -149,6 +149,93 @@ class LoadDetectDialog(FloatLayout):
 class CreateClassDialog(FloatLayout):
 	create = ObjectProperty(None)
 	cancel = ObjectProperty(None)
+	list_widget = ObjectProperty(None)
+	text_student_name = ObjectProperty(None)
+
+	def __init__(self, **kwargs):
+		super(CreateClassDialog, self).__init__(**kwargs)
+
+		# allow for enter key to submit forms
+		self.list_widget.text_student_name = self.text_student_name
+
+
+#
+# Other Widgets
+#
+
+class CreateClassListWidget(ScrollView):
+	student_widgets = []
+	selected_index = -1
+	layout = None
+
+	text_student_name = ObjectProperty(None)
+
+	def __init__(self, **kwargs):
+		super(CreateClassListWidget, self).__init__(**kwargs)
+
+		self.layout = GridLayout(cols=1, spacing=5, size_hint_y=None, padding=5)
+		self.layout.bind(minimum_height=self.layout.setter('height'))
+
+		self.clear_widgets()
+		self.add_widget(self.layout)
+
+		# if enter is pressed
+		Window.bind(on_key_down=self._on_keyboard_down)
+		Window.bind(on_key_up=self._on_keyboard_up)
+
+	def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+		if self.text_student_name.focus and keycode == 40:  # 40 - Enter key pressed
+			self.add_student(self.text_student_name.text)
+			self.text_student_name.text = ''
+
+	def _on_keyboard_up(self, instance, keyboard, keycode):
+		if self.text_student_name.focus and keycode == 40:  # 40 - Enter key pressed
+			self.text_student_name.text = ''
+
+	def add_student(self, name):
+		if name.strip() != '':
+			s = CreateClassStudentWidget(size_hint_y=None, height=40)
+			s.index = len(self.student_widgets)
+			s.parent_list = self
+			s.name = name.strip()
+			self.student_widgets.append(s)
+			self.layout.add_widget(s)
+
+	def remove_student(self):
+		if 0 <= self.selected_index < len(self.student_widgets):
+			print('removing', self.selected_index)
+			for i in range(self.selected_index, len(self.student_widgets)):
+				self.student_widgets[i].index = self.selected_index + i - 2
+			self.layout.remove_widget(self.student_widgets.pop(self.selected_index))
+			self.selected_index = -1
+
+
+	def select(self, index):
+		for i in self.student_widgets:
+			i.selected = False
+
+		# already selected the same label
+		if self.selected_index == index:
+			self.selected_index = -1
+		else:
+			self.selected_index = index
+			for i in self.student_widgets:
+				i.selected = False
+			self.student_widgets[index].selected = True
+		return True
+
+
+class CreateClassStudentWidget(BoxLayout):
+	index = None
+	selected = BooleanProperty(False)
+	selectable = BooleanProperty(True)
+	parent_list = None
+
+	name = StringProperty('TEMP')
+
+	def on_touch_down(self, touch):
+		if self.collide_point(*touch.pos) and self.selectable:
+			return self.parent_list.select(self.index)
 
 #
 # Main App
@@ -219,6 +306,9 @@ class AttendanceApp(App):
 
 	# Sidebar
 
+
+	# Dialogue
+
 	def dismiss_file_popup(self):
 		self._file_popup.dismiss()
 
@@ -243,19 +333,6 @@ class AttendanceApp(App):
 		self._detect_popup = Popup(title="Detection parameters", content=content, size_hint=(0.6, 0.9))
 		self._detect_popup.open()
 
-	# def show_save(self):
-	# 	content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
-	# 	self._popup = Popup(title="Save file", content=content,
-	# 						size_hint=(0.9, 0.9))
-	# 	self._popup.open()
-
-	def load(self, path, filename):
-		self.switch_video_file(os.path.join(path, filename[0]))
-		self.dismiss_file_popup()
-
-	def create_new_class(self):
-		self.dismiss_create_class_popup()
-
 	# Content
 
 	def switch_video_file(self, file_path):
@@ -265,6 +342,16 @@ class AttendanceApp(App):
 			self.video_main.clear_widgets()
 			self.video_main.player = VideoPlayer(source=file_path, state='play')
 			self.video_main.add_widget(self.video_main.player)
+
+	def load(self, path, filename):
+		self.switch_video_file(os.path.join(path, filename[0]))
+		self.dismiss_file_popup()
+
+	def create_new_class(self, create_class_list_widget, class_name):
+		print('Creating New Class:', class_name)
+		for i in create_class_list_widget.student_widgets:
+			print(i.name)
+		self.dismiss_create_class_popup()
 
 	def detect_faces(self, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
 		print('request to start detection:')#, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames)
