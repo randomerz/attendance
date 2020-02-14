@@ -23,6 +23,9 @@ import os
 import subprocess
 import sys
 import sqlite3
+
+import db_manager
+
 #
 # Python
 #
@@ -66,16 +69,18 @@ class StudentSidebar(BoxLayout):
 
 
 class StudentMain(TabbedPanel):
+	class_tabs = []
+
 	def __init__(self, **kwargs):
 		super(StudentMain, self).__init__(**kwargs)
 
 		self.default_tab_text = 'Welcome!'
-		self.default_tab.content = Label(text='Welcome to CAT System!')
+		self.default_tab.content = Label(text='Welcome to CATsys!')
 		
-		self.class_tabs = []
 		for i in range(len(db_curs)):
 			tab = TabbedPanelHeader(text='Class %i' % (i + 1))
-			tab.content = StudentList()
+			tab.content = StudentList(i)
+			self.class_tabs.append(tab)
 			self.add_widget(tab)
 
 
@@ -101,14 +106,14 @@ class TrainMain(BoxLayout):
 #
 
 class StudentList(ScrollView):
-	def __init__(self, **kwargs):
+	def __init__(self, db_index, **kwargs):
 		super(StudentList, self).__init__(**kwargs)
 
 		layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
 		# in case of no elements
 		layout.bind(minimum_height=layout.setter('height'))
 
-		for i in db_curs[0].execute('select * from users'):
+		for i in db_curs[db_index].execute('select * from users'):
 			btn = StudentElement(size_hint_y=None, height=40)
 			btn.student_label = str(i[0]) + '. ' + i[1] # number. student name
 			layout.add_widget(btn)
@@ -348,9 +353,35 @@ class AttendanceApp(App):
 		self.dismiss_file_popup()
 
 	def create_new_class(self, create_class_list_widget, class_name):
-		print('Creating New Class:', class_name)
-		for i in create_class_list_widget.student_widgets:
-			print(i.name)
+		if not len(create_class_list_widget.student_widgets):
+			print('Class is empty!')
+			return
+
+		path = os.path.join('records', class_name.replace(' ', '_') + '.db')
+		if os.path.exists(path):
+			print('Error! Class already exists!')
+			return
+
+		print('Creating New Class:', path)			
+
+		db = open(path, 'w')
+		conn = sqlite3.connect(path)
+		curs = conn.cursor()
+		db_cons.append(conn)
+		db_curs.append(curs)
+		db_manager.reset(curs, True)
+
+		for i, w in enumerate(create_class_list_widget.student_widgets):
+			print(w.name)
+			db_manager.add_user(curs, i, w.name)
+
+		tab = TabbedPanelHeader(text='Class %i' % (len(self.student_main.class_tabs) + 1))
+		tab.content = StudentList(len(self.student_main.class_tabs))
+		self.student_main.class_tabs.append(tab)
+		self.student_main.add_widget(tab)
+
+		db_manager.close(conn)
+
 		self.dismiss_create_class_popup()
 
 	def detect_faces(self, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
