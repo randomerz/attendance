@@ -23,18 +23,22 @@ import os
 import subprocess
 import sys
 import sqlite3
+
+import db_manager
+
 #
 # Python
 #
 
-db_cons, db_curs = [], []
+db_cons, db_curs, db_names = [], [], []
 try:
 	# finding db files
 	db_paths = []
 	for root, dirs, files in os.walk('records'):
 		for file in files:
-			if '.db' in file:
+			if '.db' in file: # TO DO: check if .db is at the end of file name, not just part of file
 				db_paths.append(os.path.join(root, file))
+				db_names.append(file[:-3])
 	# connect to dbs
 	for i in range(len(db_paths)):
 		db_cons.append(sqlite3.connect(db_paths[i]))
@@ -66,16 +70,18 @@ class StudentSidebar(BoxLayout):
 
 
 class StudentMain(TabbedPanel):
+	class_tabs = []
+
 	def __init__(self, **kwargs):
 		super(StudentMain, self).__init__(**kwargs)
 
 		self.default_tab_text = 'Welcome!'
-		self.default_tab.content = Label(text='Welcome to CAT System!')
+		self.default_tab.content = Label(text='Welcome to CATsys!')
 		
-		self.class_tabs = []
 		for i in range(len(db_curs)):
-			tab = TabbedPanelHeader(text='Class %i' % (i + 1))
-			tab.content = StudentList()
+			tab = TabbedPanelHeader(text=db_names[i])#(text='Class %i' % (i + 1))
+			tab.content = StudentList(i)
+			self.class_tabs.append(tab)
 			self.add_widget(tab)
 
 
@@ -101,14 +107,14 @@ class TrainMain(BoxLayout):
 #
 
 class StudentList(ScrollView):
-	def __init__(self, **kwargs):
+	def __init__(self, db_index, **kwargs):
 		super(StudentList, self).__init__(**kwargs)
 
 		layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
 		# in case of no elements
 		layout.bind(minimum_height=layout.setter('height'))
 
-		for i in db_curs[0].execute('select * from users'):
+		for i in db_curs[db_index].execute('select * from users'):
 			btn = StudentElement(size_hint_y=None, height=40)
 			btn.student_label = str(i[0]) + '. ' + i[1] # number. student name
 			layout.add_widget(btn)
@@ -136,6 +142,11 @@ class StudentElement(BoxLayout):
 # Dialogue
 #
 
+class ConfirmDialog(FloatLayout):
+	ok = ObjectProperty(None)
+	cancel = ObjectProperty(None)
+
+
 class LoadFileDialog(FloatLayout):
 	load = ObjectProperty(None)
 	cancel = ObjectProperty(None)
@@ -149,6 +160,93 @@ class LoadDetectDialog(FloatLayout):
 class CreateClassDialog(FloatLayout):
 	create = ObjectProperty(None)
 	cancel = ObjectProperty(None)
+	list_widget = ObjectProperty(None)
+	text_student_name = ObjectProperty(None)
+
+	def __init__(self, **kwargs):
+		super(CreateClassDialog, self).__init__(**kwargs)
+
+		# allow for enter key to submit forms
+		self.list_widget.text_student_name = self.text_student_name
+
+
+#
+# Other Widgets
+#
+
+class CreateClassListWidget(ScrollView):
+	student_widgets = []
+	selected_index = -1
+	layout = None
+
+	text_student_name = ObjectProperty(None)
+
+	def __init__(self, **kwargs):
+		super(CreateClassListWidget, self).__init__(**kwargs)
+
+		self.layout = GridLayout(cols=1, spacing=5, size_hint_y=None, padding=5)
+		self.layout.bind(minimum_height=self.layout.setter('height'))
+
+		self.clear_widgets()
+		self.add_widget(self.layout)
+
+		# if enter is pressed
+		Window.bind(on_key_down=self._on_keyboard_down)
+		Window.bind(on_key_up=self._on_keyboard_up)
+
+	def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
+		if self.text_student_name.focus and keycode == 40:  # 40 - Enter key pressed
+			self.add_student(self.text_student_name.text)
+			self.text_student_name.text = ''
+
+	def _on_keyboard_up(self, instance, keyboard, keycode):
+		if self.text_student_name.focus and keycode == 40:  # 40 - Enter key pressed
+			self.text_student_name.text = ''
+
+	def add_student(self, name):
+		if name.strip() != '':
+			s = CreateClassStudentWidget(size_hint_y=None, height=40)
+			s.index = len(self.student_widgets)
+			s.parent_list = self
+			s.name = name.strip()
+			self.student_widgets.append(s)
+			self.layout.add_widget(s)
+
+	def remove_student(self):
+		if 0 <= self.selected_index < len(self.student_widgets):
+			print('removing', self.selected_index)
+			for i in range(self.selected_index, len(self.student_widgets)):
+				self.student_widgets[i].index = self.selected_index + i - 2
+			self.layout.remove_widget(self.student_widgets.pop(self.selected_index))
+			self.selected_index = -1
+
+
+	def select(self, index):
+		for i in self.student_widgets:
+			i.selected = False
+
+		# already selected the same label
+		if self.selected_index == index:
+			self.selected_index = -1
+		else:
+			self.selected_index = index
+			for i in self.student_widgets:
+				i.selected = False
+			self.student_widgets[index].selected = True
+		return True
+
+
+class CreateClassStudentWidget(BoxLayout):
+	index = None
+	selected = BooleanProperty(False)
+	selectable = BooleanProperty(True)
+	parent_list = None
+
+	name = StringProperty('TEMP')
+
+	def on_touch_down(self, touch):
+		if self.collide_point(*touch.pos) and self.selectable:
+			return self.parent_list.select(self.index)
 
 #
 # Main App
@@ -167,6 +265,7 @@ class AttendanceApp(App):
 	train_side = None
 
 	video_file_path = ''
+	confirmation_func = None
 
 
 	def build(self):
@@ -219,6 +318,18 @@ class AttendanceApp(App):
 
 	# Sidebar
 
+
+	# Dialogue
+
+	def dismiss_confirmation(self):
+		self._confirmation_popup.dismiss()
+
+	def show_confirmation(self, next_func):
+		content = ConfirmDialog(cancel=self.dismiss_file_popup)
+		self._confirmation_popup = Popup(title="Confirm Option", content=content, size_hint=(0.6, 0.4))
+		self.confirmation_func = next_func
+		self._confirmation_popup.open()
+
 	def dismiss_file_popup(self):
 		self._file_popup.dismiss()
 
@@ -243,20 +354,10 @@ class AttendanceApp(App):
 		self._detect_popup = Popup(title="Detection parameters", content=content, size_hint=(0.6, 0.9))
 		self._detect_popup.open()
 
-	# def show_save(self):
-	# 	content = SaveDialog(save=self.save, cancel=self.dismiss_popup)
-	# 	self._popup = Popup(title="Save file", content=content,
-	# 						size_hint=(0.9, 0.9))
-	# 	self._popup.open()
-
-	def load(self, path, filename):
-		self.switch_video_file(os.path.join(path, filename[0]))
-		self.dismiss_file_popup()
-
-	def create_new_class(self):
-		self.dismiss_create_class_popup()
-
 	# Content
+
+	def confirm_confirmation(self):
+		self.next_func()
 
 	def switch_video_file(self, file_path):
 		# TODO: check if file is valid video file via 'if' statement or 'try except'
@@ -265,6 +366,48 @@ class AttendanceApp(App):
 			self.video_main.clear_widgets()
 			self.video_main.player = VideoPlayer(source=file_path, state='play')
 			self.video_main.add_widget(self.video_main.player)
+
+	def load(self, path, filename):
+		self.switch_video_file(os.path.join(path, filename[0]))
+		self.dismiss_file_popup()
+
+	def create_new_class(self, create_class_list_widget, class_name):
+		if not len(create_class_list_widget.student_widgets):
+			print('Class is empty!')
+			return
+
+		path = os.path.join('records', class_name.replace(' ', '_') + '.db')
+		if os.path.exists(path):
+			print('Error! Class already exists!')
+			return
+
+		print('Creating New Class:', path)			
+
+		db = open(path, 'w')
+		conn = sqlite3.connect(path)
+		curs = conn.cursor()
+		db_cons.append(conn)
+		db_curs.append(curs)
+		db_manager.reset(curs, True)
+
+		for i, w in enumerate(create_class_list_widget.student_widgets):
+			print(w.name)
+			db_manager.add_user(curs, i, w.name)
+
+		tab = TabbedPanelHeader(text=class_name)
+		tab.content = StudentList(len(self.student_main.class_tabs))
+		self.student_main.class_tabs.append(tab)
+		self.student_main.add_widget(tab)
+
+		db_manager.close(conn)
+
+		self.dismiss_create_class_popup()
+
+	def remove_class_query(self):
+		self.show_confirmation(self.remove_class)
+
+	def remove_class(self):
+		print('removing a class!')
 
 	def detect_faces(self, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
 		print('request to start detection:')#, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames)
