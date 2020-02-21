@@ -397,7 +397,7 @@ class AttendanceApp(App):
 			print(w.name)
 			db_manager.add_user(curs, i, w.name)
 
-		tab = TabbedPanelHeader(text=class_name)
+		tab = TabbedPanelHeader(text='Class %i' % (len(self.student_main.class_tabs) + 1))
 		tab.content = StudentList(len(self.student_main.class_tabs))
 		self.student_main.class_tabs.append(tab)
 		self.student_main.add_widget(tab)
