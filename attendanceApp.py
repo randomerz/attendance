@@ -143,6 +143,7 @@ class StudentElement(BoxLayout):
 #
 
 class ConfirmDialog(FloatLayout):
+	message = StringProperty('Are you sure you want to do this?')
 	ok = ObjectProperty(None)
 	cancel = ObjectProperty(None)
 
@@ -324,8 +325,9 @@ class AttendanceApp(App):
 	def dismiss_confirmation(self):
 		self._confirmation_popup.dismiss()
 
-	def show_confirmation(self, next_func):
+	def show_confirmation(self, next_func, message='Are you sure you want to do this?'):
 		content = ConfirmDialog(cancel=self.dismiss_file_popup)
+		content.message = message
 		self._confirmation_popup = Popup(title="Confirm Option", content=content, size_hint=(0.6, 0.4))
 		self.confirmation_func = next_func
 		self._confirmation_popup.open()
@@ -357,7 +359,8 @@ class AttendanceApp(App):
 	# Content
 
 	def confirm_confirmation(self):
-		self.next_func()
+		self.confirmation_func()
+		self.dismiss_confirmation()
 
 	def switch_video_file(self, file_path):
 		# TODO: check if file is valid video file via 'if' statement or 'try except'
@@ -404,10 +407,23 @@ class AttendanceApp(App):
 		self.dismiss_create_class_popup()
 
 	def remove_class_query(self):
-		self.show_confirmation(self.remove_class)
+		if self.student_main.current_tab == self.student_main.default_tab:
+			return
+		self.show_confirmation(self.remove_class, message='Are you sure you want to remove class: %s' % self.student_main.current_tab.text)
 
 	def remove_class(self):
+		# TODO: test this out more lmao
 		print('removing a class!')
+		rem_tab = self.student_main.current_tab
+		ind = db_names.index(rem_tab.text)
+		db_manager.close(db_cons.pop(ind))
+		db_curs.pop(ind)
+		db_names.pop(ind)
+		os.remove('records/%s.db' % rem_tab.text)
+		# TODO: remove model for class
+		# TODO: remove student images
+		self.student_main.switch_to(self.student_main.default_tab)
+		self.student_main.remove_widget(rem_tab)
 
 	def detect_faces(self, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
 		print('request to start detection:')#, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames)
