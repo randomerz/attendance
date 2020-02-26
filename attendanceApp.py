@@ -85,7 +85,6 @@ class StudentMain(TabbedPanel):
 			self.add_widget(tab)
 
 
-
 class VideoSidebar(BoxLayout):
 	pass
 
@@ -107,31 +106,47 @@ class TrainMain(BoxLayout):
 #
 
 class StudentList(ScrollView):
+	student_widgets = []
+	selected_index = -1
+	layout = None
+
 	def __init__(self, db_index, **kwargs):
 		super(StudentList, self).__init__(**kwargs)
 
-		layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
+		self.layout = GridLayout(cols=1, spacing=10, size_hint_y=None, padding=10)
 		# in case of no elements
-		layout.bind(minimum_height=layout.setter('height'))
+		self.layout.bind(minimum_height=self.layout.setter('height'))
 
 		for i in db_curs[db_index].execute('select * from users'):
-			btn = StudentElement(size_hint_y=None, height=40)
-			btn.student_label = str(i[0]) + '. ' + i[1] # number. student name
-			layout.add_widget(btn)
-		'''
-		for i in range(30):
-			btn = StudentElement(size_hint_y=None, height=40)
-			btn.student_label = str(i + 1) + '. Student Name'
-			layout.add_widget(btn)
-		'''
+			s = CreateClassStudentWidget(size_hint_y=None, height=40)
+			s.index = len(self.student_widgets)
+			s.parent_list = self
+			s.name = str(i[0]) + '. ' + i[1].strip()
+			self.student_widgets.append(s)
+			self.layout.add_widget(s)
 
 		self.clear_widgets()
 		# add gridlayout with all the elements to scroll view (SV can only have 1 widget)
-		self.add_widget(layout)
+		self.add_widget(self.layout)
+		
+
+	def select(self, index):
+		for i in self.student_widgets:
+			i.selected = False
+
+		# already selected the same label
+		if self.selected_index == index:
+			self.selected_index = -1
+		else:
+			self.selected_index = index
+			for i in self.student_widgets:
+				i.selected = False
+			self.student_widgets[index].selected = True
+		return True
 
 
 #
-# Content Widgets
+# Content Support Widgets
 #
 
 class StudentElement(BoxLayout):
@@ -375,11 +390,12 @@ class AttendanceApp(App):
 		self.dismiss_file_popup()
 
 	def create_new_class(self, create_class_list_widget, class_name):
+		# TO DO: creating class and then immediately removing class doesn't work
 		if not len(create_class_list_widget.student_widgets):
 			print('Class is empty!')
 			return
 
-		path = os.path.join('records', class_name.replace(' ', '_') + '.db')
+		path = os.path.join('records', class_name.strip().replace(' ', '_') + '.db')
 		if os.path.exists(path):
 			print('Error! Class already exists!')
 			return
@@ -397,7 +413,7 @@ class AttendanceApp(App):
 			print(w.name)
 			db_manager.add_user(curs, i, w.name)
 
-		tab = TabbedPanelHeader(text='Class %i' % (len(self.student_main.class_tabs) + 1))
+		tab = TabbedPanelHeader(text=class_name)
 		tab.content = StudentList(len(self.student_main.class_tabs))
 		self.student_main.class_tabs.append(tab)
 		self.student_main.add_widget(tab)

@@ -1,29 +1,59 @@
-import sqlite3
-import argparse
-from progress.bar import Bar
-import cv2 as cv
-import os
-import json
+'''
+Camera Example
+==============
 
-#
-# Python
-#
+This example demonstrates a simple use of the camera. It shows a window with
+a buttoned labelled 'play' to turn the camera on and off. Note that
+not finding a camera, perhaps because gstreamer is not installed, will
+throw an exception during the kv language processing.
 
-#'''
-print('zzzzzzzzzzzzzzzz')
-ap = argparse.ArgumentParser()
-ap.add_argument('-d', '--database', help="Path To SQLite Database", required=True) # temporary, search directory for databases instead
-ap.add_argument('-v','--video', help="Input Video For Overlay")
-args = vars(ap.parse_args())
-conn = None
-curs = None
-print(args)
+'''
 
-try:
-	conn = sqlite3.connect(args['database'])
-	curs = conn.cursor()
-	for i in curs.execute('select * from users'):
-		print(i)
-except Exception as e:
-	print('Error!')
-	print(e)
+# Uncomment these lines to see all the messages
+# from kivy.logger import Logger
+# import logging
+# Logger.setLevel(logging.TRACE)
+
+from kivy.app import App
+from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
+import time
+Builder.load_string('''
+<CameraClick>:
+    orientation: 'vertical'
+    Camera:
+        id: camera
+        resolution: (640, 480)
+        play: False
+    ToggleButton:
+        text: 'Play'
+        on_press: camera.play = not camera.play
+        size_hint_y: None
+        height: '48dp'
+    Button:
+        text: 'Capture'
+        size_hint_y: None
+        height: '48dp'
+        on_press: root.capture()
+''')
+
+
+class CameraClick(BoxLayout):
+    def capture(self):
+        '''
+        Function to capture the images and give them the names
+        according to their captured time and date.
+        '''
+        camera = self.ids['camera']
+        timestr = time.strftime("%Y%m%d_%H%M%S")
+        camera.export_to_png("IMG_{}.png".format(timestr))
+        print("Captured")
+
+
+class TestCamera(App):
+
+    def build(self):
+        return CameraClick()
+
+
+TestCamera().run()
