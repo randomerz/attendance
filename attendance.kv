@@ -54,11 +54,39 @@
 	padding: 10
 	spacing: 10
 	orientation: 'vertical'
+
+	layout_container: layout_container
+	recorded_layout: recorded_layout
+	live_layout: live_layout
+
 	Button:
-		text: "Choose Video"
-		on_release: app.show_file()
-	Button:
-		text: "Live Cam\n(Not implemented)"
+		text: root.toggle_string
+		on_release: root.toggle_video_mode()
+
+	BoxLayout:
+		id: layout_container
+		orientation: 'vertical'
+
+		BoxLayout:
+			id: recorded_layout
+			spacing: 10
+			orientation: 'vertical'
+			Button:
+				text: "Choose Video"
+				on_release: app.show_file()
+			Button:
+				text: "Screenshot"
+
+		BoxLayout:
+			id: live_layout
+			spacing: 10
+			orientation: 'vertical'
+			Button:
+				text: "Pause Video"
+				on_release: app.show_file()
+			Button:
+				text: "Screenshot"
+
 	Button:
 		text: "Detect Faces"
 		on_release: app.show_detect()
@@ -178,7 +206,7 @@
 					height: 40
 					size_hint_y: None
 					id: text_class_name
-					text: "Class TEMP"
+					text: "Class_TEMP"
 				
 				RelativeLayout:
 					pos: self.parent.pos

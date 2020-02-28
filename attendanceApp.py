@@ -30,6 +30,8 @@ import db_manager
 # Python
 #
 
+color_blue = '#4c8bf5'
+
 db_cons, db_curs, db_names = [], [], []
 try:
 	# finding db files
@@ -86,7 +88,39 @@ class StudentMain(TabbedPanel):
 
 
 class VideoSidebar(BoxLayout):
-	pass
+	layout_container = ObjectProperty(None)
+	recorded_layout = ObjectProperty(None)
+	live_layout = ObjectProperty(None)
+
+	cur_mode = 'recorded'
+	toggle_string = StringProperty('Use recorded video\n(Click to toggle)')
+
+	def __init__(self, **kwargs):
+		super(VideoSidebar, self).__init__(**kwargs)
+		self.live_layout.size_hint_y = 0
+		self.live_layout.height = '0dp'
+		self.live_layout.opacity = 0
+		self.recorded_layout.size_hint_y = 1
+		self.recorded_layout.opacity = 1
+	
+	def toggle_video_mode(self):
+		if self.cur_mode == 'recorded':
+			self.toggle_string = 'Use live video\n(Click to toggle)'
+			self.cur_mode = 'live'
+			self.recorded_layout.size_hint_y = 0
+			self.recorded_layout.height = '0dp'
+			self.recorded_layout.opacity = 0
+			self.live_layout.size_hint_y = 1
+			self.live_layout.opacity = 1
+
+		elif self.cur_mode == 'live':
+			self.toggle_string = 'Use recorded video\n(Click to toggle)'
+			self.cur_mode = 'recorded'
+			self.live_layout.size_hint_y = 0
+			self.live_layout.height = '0dp'
+			self.live_layout.opacity = 0
+			self.recorded_layout.size_hint_y = 1
+			self.recorded_layout.opacity = 1
 
 
 class VideoMain(BoxLayout):
