@@ -82,10 +82,11 @@
 			spacing: 10
 			orientation: 'vertical'
 			Button:
-				text: "Pause Video"
+				text: "Choose Source"
 				on_release: app.show_file()
 			Button:
-				text: "Screenshot"
+				text: "Pause Video"
+				on_release: root.pause_live()
 
 	Button:
 		text: "Detect Faces"

@@ -13,7 +13,9 @@ from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.dropdown import DropDown
 from kivy.uix.videoplayer import VideoPlayer
+from kivy.uix.camera import Camera
 from kivy.uix.video import Video
 from kivy.uix.popup import Popup
 from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
@@ -88,9 +90,9 @@ class StudentMain(TabbedPanel):
 
 
 class VideoSidebar(BoxLayout):
-	layout_container = ObjectProperty(None)
 	recorded_layout = ObjectProperty(None)
 	live_layout = ObjectProperty(None)
+	video_main = None
 
 	cur_mode = 'recorded'
 	toggle_string = StringProperty('Use recorded video\n(Click to toggle)')
@@ -102,8 +104,22 @@ class VideoSidebar(BoxLayout):
 		self.live_layout.opacity = 0
 		self.recorded_layout.size_hint_y = 1
 		self.recorded_layout.opacity = 1
+
+		dropdown = DropDown()
+		for i in range(8):
+			btn = Button(text='Source %d' % i, size_hint_y=None, height=44)
+			btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+			dropdown.add_widget(btn)
+			
+		main_button = Button(text='Source 0', size_hint=(None, None))
+		main_button.bind(on_release=dropdown.open)
+		dropdown.bind(on_select=lambda instance, x: setattr(main_button, 'text', x))
+		#self.live_layout.clear_widgets()
+		#self.live_layout.add_widget(dropdown)
 	
 	def toggle_video_mode(self):
+		self.video_main.toggle_video_mode()
+
 		if self.cur_mode == 'recorded':
 			self.toggle_string = 'Use live video\n(Click to toggle)'
 			self.cur_mode = 'live'
@@ -122,9 +138,29 @@ class VideoSidebar(BoxLayout):
 			self.recorded_layout.size_hint_y = 1
 			self.recorded_layout.opacity = 1
 
+	def pause_live(self):
+		self.video_main.player.play = not self.video_main.player.play
+
 
 class VideoMain(BoxLayout):
 	player = ObjectProperty(None)
+	camera = None
+
+	cur_mode = 'recorded'
+	
+	def toggle_video_mode(self):
+		if self.cur_mode == 'recorded':
+			self.cur_mode = 'live'
+			if not self.camera:
+				self.camera = Camera(index=1, resolution=(640,480))
+			self.player = self.camera
+
+		elif self.cur_mode == 'live':
+			self.cur_mode = 'recorded'
+			self.player = VideoPlayer()
+
+		self.clear_widgets()
+		self.add_widget(self.player)
 
 
 class TrainSidebar(BoxLayout):
@@ -326,6 +362,8 @@ class AttendanceApp(App):
 		self.video_side = VideoSidebar()
 		self.train_main = TrainMain()
 		self.train_side = TrainSidebar()
+
+		self.video_side.video_main = self.video_main
 
 		self.main_cont = MainContainer(size_hint_x=.75)
 		self.main_cont.add_widget(self.student_main)
