@@ -10,16 +10,19 @@
 
 	Button:
 		size_hint: 1, .15
-		text: "Students"
+		text: app.side_student_string
 		on_press: app.switch_to_student()
+		markup: True
 	Button:
 		size_hint: 1, .15
-		text: "Attendance"
+		text: app.side_attendence_string
 		on_press: app.switch_to_video()
+		markup: True
 	Button:
 		size_hint: 1, .15
-		text: "Training"
+		text: app.side_train_string
 		on_press: app.switch_to_train()
+		markup: True
 	BoxLayout:
 		id: lower_cont
 
@@ -55,16 +58,14 @@
 	spacing: 10
 	orientation: 'vertical'
 
-	layout_container: layout_container
-	recorded_layout: recorded_layout
 	live_layout: live_layout
+	recorded_layout: recorded_layout
 
 	Button:
 		text: root.toggle_string
 		on_release: root.toggle_video_mode()
 
 	BoxLayout:
-		id: layout_container
 		orientation: 'vertical'
 
 		BoxLayout:
@@ -75,15 +76,15 @@
 				text: "Choose Video"
 				on_release: app.show_file()
 			Button:
-				text: "Screenshot"
+				text: "Temp Button"
 
 		BoxLayout:
 			id: live_layout
 			spacing: 10
 			orientation: 'vertical'
 			Button:
-				text: "Choose Source"
-				on_release: app.show_file()
+				text: root.toggle_source_string
+				on_release: root.toggle_source()
 			Button:
 				text: "Pause Video"
 				on_release: root.pause_live()

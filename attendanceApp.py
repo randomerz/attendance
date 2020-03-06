@@ -1,30 +1,30 @@
 from kivy.app import App
-from kivy.uix.widget import Widget
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
-from kivy.uix.tabbedpanel import TabbedPanel
-from kivy.uix.tabbedpanel import TabbedPanelHeader
+from kivy.core.window import Window
+from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
 from kivy.uix.behaviors import FocusBehavior
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.camera import Camera
+from kivy.uix.dropdown import DropDown
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.dropdown import DropDown
-from kivy.uix.videoplayer import VideoPlayer
-from kivy.uix.camera import Camera
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.tabbedpanel import TabbedPanel
+from kivy.uix.tabbedpanel import TabbedPanelHeader
 from kivy.uix.video import Video
-from kivy.uix.popup import Popup
-from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
-from kivy.core.window import Window
+from kivy.uix.videoplayer import VideoPlayer
+from kivy.uix.widget import Widget
 
 import os
+import sqlite3
 import subprocess
 import sys
-import sqlite3
 
 import db_manager
 
@@ -32,7 +32,7 @@ import db_manager
 # Python
 #
 
-color_blue = '#4c8bf5'
+color_blue = '9999ff'
 
 db_cons, db_curs, db_names = [], [], []
 try:
@@ -96,6 +96,7 @@ class VideoSidebar(BoxLayout):
 
 	cur_mode = 'recorded'
 	toggle_string = StringProperty('Use recorded video\n(Click to toggle)')
+	toggle_source_string = StringProperty('Toggle Source (0)')
 
 	def __init__(self, **kwargs):
 		super(VideoSidebar, self).__init__(**kwargs)
@@ -138,22 +139,33 @@ class VideoSidebar(BoxLayout):
 			self.recorded_layout.size_hint_y = 1
 			self.recorded_layout.opacity = 1
 
+	def toggle_source(self):
+		self.video_main.toggle_camera_source()
+		self.toggle_source_string = 'Toggle Source (%s)' % self.video_main.cur_source
+
 	def pause_live(self):
 		self.video_main.player.play = not self.video_main.player.play
 
 
 class VideoMain(BoxLayout):
 	player = ObjectProperty(None)
-	camera = None
 
+	cur_source = 0
+	cam0 = None
+	cam1 = None
 	cur_mode = 'recorded'
 	
 	def toggle_video_mode(self):
 		if self.cur_mode == 'recorded':
 			self.cur_mode = 'live'
-			if not self.camera:
-				self.camera = Camera(index=1, resolution=(640,480))
-			self.player = self.camera
+			if self.cur_source == 0:
+				if not self.cam0:
+					self.cam0 = Camera(index=0, resolution=(640,480))
+				self.player = self.cam0
+			elif self.cur_source == 1:
+				if not self.cam1:
+					self.cam1 = Camera(index=1, resolution=(640,480))
+				self.player = self.cam1
 
 		elif self.cur_mode == 'live':
 			self.cur_mode = 'recorded'
@@ -161,6 +173,20 @@ class VideoMain(BoxLayout):
 
 		self.clear_widgets()
 		self.add_widget(self.player)
+
+	def toggle_camera_source(self):
+		self.cur_source = (self.cur_source + 1) % 2
+		if self.cur_source == 0:
+			if not self.cam0:
+				self.cam0 = Camera(index=0, resolution=(640,480))
+			self.player = self.cam0
+		elif self.cur_source == 1:
+			if not self.cam1:
+				self.cam1 = Camera(index=1, resolution=(640,480))
+			self.player = self.cam1
+		self.clear_widgets()
+		self.add_widget(self.player)
+
 
 
 class TrainSidebar(BoxLayout):
@@ -350,6 +376,10 @@ class AttendanceApp(App):
 	train_main = None
 	train_side = None
 
+	side_student_string = StringProperty('[color=%s]Student[color=%s]' % (color_blue, color_blue))
+	side_attendence_string = StringProperty('Attendence')
+	side_train_string = StringProperty('Train')
+
 	video_file_path = ''
 	confirmation_func = None
 
@@ -389,6 +419,9 @@ class AttendanceApp(App):
 		self.main_cont.add_widget(self.student_main)
 		self.side_cont.clear_widgets()
 		self.side_cont.add_widget(self.student_side)
+		self.side_student_string = '[color=%s]Student[color=%s]' % (color_blue, color_blue)
+		self.side_attendence_string = 'Attendence'
+		self.side_train_string = 'Train'
 
 	def switch_to_video(self):
 		self.tab = 1
@@ -396,6 +429,9 @@ class AttendanceApp(App):
 		self.main_cont.add_widget(self.video_main)
 		self.side_cont.clear_widgets()
 		self.side_cont.add_widget(self.video_side)
+		self.side_student_string = 'Student'
+		self.side_attendence_string = '[color=%s]Attendence[color=%s]' % (color_blue, color_blue)
+		self.side_train_string = 'Train'
 
 	def switch_to_train(self):
 		self.tab = 2
@@ -403,6 +439,9 @@ class AttendanceApp(App):
 		self.main_cont.add_widget(self.train_main)
 		self.side_cont.clear_widgets()
 		self.side_cont.add_widget(self.train_side)
+		self.side_student_string = 'Student'
+		self.side_attendence_string = 'Attendence'
+		self.side_train_string = '[color=%s]Train[color=%s]' % (color_blue, color_blue)
 
 	# Sidebar
 
