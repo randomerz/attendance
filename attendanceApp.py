@@ -1,4 +1,5 @@
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
 from kivy.uix.behaviors import FocusBehavior
@@ -25,6 +26,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+import threading
 
 import db_manager
 
@@ -32,7 +34,7 @@ import db_manager
 # Python
 #
 
-color_blue = '9999ff'
+color_blue = '00ddff'
 
 db_cons, db_curs, db_names = [], [], []
 try:
@@ -47,8 +49,8 @@ try:
 	for i in range(len(db_paths)):
 		db_cons.append(sqlite3.connect(db_paths[i]))
 		db_curs.append(db_cons[i].cursor())
-		for i in db_curs[i].execute('select * from users'):
-			print(i)
+		# for i in db_curs[i].execute('select * from users'):
+		# 	print(i)
 except Exception as e:
 	print('Error!')
 	print(e)
@@ -383,6 +385,8 @@ class AttendanceApp(App):
 	video_file_path = ''
 	confirmation_func = None
 
+	detect_faces_thread = None
+
 
 	def build(self):
 		Window.bind(on_dropfile=self._on_file_drop) # makes thing really slow i think
@@ -553,19 +557,27 @@ class AttendanceApp(App):
 		self.student_main.remove_widget(rem_tab)
 
 	def detect_faces(self, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
-		print('request to start detection:')#, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames)
 		self.dismiss_detect_popup()
+		c = ['python3', 'detection.py', '--video', file_path, '--database', db_path, '--location', location, '--imagedir', image_dir, '--save-video', save_vid_path, '--save-boxes', save_boxes_path]
+		if track_faces:
+			c += ['--track']
+		if int(num_frames) > 0:
+			c += ['-n', num_frames]
+		print(' '.join(c))
+		self.detect_faces_thread = threading.Thread(target=self.run_detect_faces, args=(c, ))
+		self.detect_faces_thread.daemon = True # kill thread when main program ends
+		self.detect_faces_thread.start()
+		#Clock.schedule_once(self.run_detect_faces(c))
+		# subprocess.run(c)
+		#python3 detection.py --video vids/me.mp4 --track --save-boxes boxes/test.pkl --save-video vids/me_out.mp4 --imagedir imdata --database records.db --location "TJ202"
+
+
+	def run_detect_faces(self, command):
 		try:
-			c = ['python3', 'detection.py', '--video', file_path, '--database', db_path, '--location', location, '--imagedir', image_dir, '--save-video', save_vid_path, '--save-boxes', save_boxes_path]
-			if track_faces:
-				c += ['--track']
-			if int(num_frames) > 0:
-				c += ['-n', num_frames]
-			print(' '.join(c))
-			subprocess.run(c)
-			#python3 detection.py --video vids/me.mp4 --track --save-boxes boxes/test.pkl --save-video vids/me_out.mp4 --imagedir imdata --database records.db --location "TJ202"
+			print('Running!')
+			#subprocess.run(command)
 		except Exception as e:
-			print('e-error!')
+			print('error: ')
 			print(e)
 
 if __name__ == '__main__':
