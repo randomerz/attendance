@@ -1,10 +1,11 @@
-import sqlite3
 import argparse
-import cv2 as cv
-import os
 import json
+import os
+import sqlite3
 import sys
 from random import randint
+
+import cv2 as cv
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-d', '--database', help="Path To SQLite Database", required=False)
@@ -158,7 +159,7 @@ def drawBoxes(db_curs, vid, datetime, location, test=False):
 		vid[i] = cv.putText(vid[i], "Frame " + str(i), (0,22),cv.FONT_HERSHEY_SIMPLEX,1.0,color=(0,255,0), thickness=2) 
 	return vid
 
-def writeVideo(vid,vfilepath, fps):
+def writeVideo(vid, vfilepath, fps):
 	print("Saving Video To", filepath)
 	if len(vid) == 0: return
 	fourcc = cv.VideoWriter_fourcc(*'DIV3') 
@@ -215,4 +216,3 @@ if __name__ == "__main__":
 		elif(inp == 11): reset(curs, True)
 		if args["option"]: break
 	close(conn)
-

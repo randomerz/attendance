@@ -1,7 +1,18 @@
+import os
+import sqlite3
+import subprocess
+import sys
+import threading
+
+import cv2
+import db_manager
+import process_video
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.properties import (ReferenceListProperty, ObjectProperty, BooleanProperty, NumericProperty, StringProperty)
+from kivy.graphics.texture import Texture
+from kivy.properties import (BooleanProperty, NumericProperty, ObjectProperty,
+							 ReferenceListProperty, StringProperty)
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -9,26 +20,18 @@ from kivy.uix.camera import Camera
 from kivy.uix.dropdown import DropDown
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.image import Image
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.recycleview import RecycleView
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.tabbedpanel import TabbedPanel
-from kivy.uix.tabbedpanel import TabbedPanelHeader
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
 from kivy.uix.video import Video
 from kivy.uix.videoplayer import VideoPlayer
 from kivy.uix.widget import Widget
-
-import os
-import sqlite3
-import subprocess
-import sys
-import threading
-
-import db_manager
 
 #
 # Python
@@ -251,6 +254,27 @@ class StudentElement(BoxLayout):
 	student_label = StringProperty('TEMP')
 
 
+class ConsoleDisplayWidget(BoxLayout):
+	img = Image()
+	label = Label(height=40, size_hint_y=None)
+
+	def __init__(self, **kwargs):
+		super(ConsoleDisplayWidget, self).__init__(**kwargs)
+
+		self.add_widget(self.img)
+		self.add_widget(self.label)
+		self.label.text = 'Started!'
+
+
+	def update_texture(self, frame):
+		# updates image with a cv2 image
+		buf1 = cv2.flip(frame, 0)
+		buf = buf1.tostring()
+		texture1 = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
+		texture1.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+		self.img.texture = texture1
+
+
 #
 # Dialogue
 #
@@ -389,7 +413,7 @@ class AttendanceApp(App):
 
 
 	def build(self):
-		Window.bind(on_dropfile=self._on_file_drop) # makes thing really slow i think
+		Window.bind(on_dropfile=self._on_file_drop) # makes thing really slow i think in windows
 		self.student_main = StudentMain()
 		self.student_side = StudentSidebar()
 		self.video_main = VideoMain()
@@ -406,7 +430,7 @@ class AttendanceApp(App):
 		self.side_cont = side_container.side_content
 		self.side_cont.add_widget(self.student_side)
 
-		layout = BoxLayout(orientation='horizontal')
+		layout = BoxLayout(orientation='horizontal', spacing=5)
 		layout.add_widget(side_container)
 		layout.add_widget(self.main_cont)
 
@@ -436,6 +460,13 @@ class AttendanceApp(App):
 		self.side_student_string = 'Student'
 		self.side_attendence_string = '[color=%s]Attendence[color=%s]' % (color_blue, color_blue)
 		self.side_train_string = 'Train'
+
+		self.main_cont.clear_widgets()
+		t = ConsoleDisplayWidget()
+		self.main_cont.add_widget(t)
+		capture = cv2.VideoCapture(0)
+		ret, frame = capture.read()
+		t.update_texture(frame)
 
 	def switch_to_train(self):
 		self.tab = 2
@@ -564,7 +595,7 @@ class AttendanceApp(App):
 		if int(num_frames) > 0:
 			c += ['-n', num_frames]
 		print(' '.join(c))
-		self.detect_faces_thread = threading.Thread(target=self.run_detect_faces, args=(c, ))
+		self.detect_faces_thread = threading.Thread(target=self.run_detect_faces, args=(file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames, ))
 		self.detect_faces_thread.daemon = True # kill thread when main program ends
 		self.detect_faces_thread.start()
 		#Clock.schedule_once(self.run_detect_faces(c))
@@ -572,9 +603,10 @@ class AttendanceApp(App):
 		#python3 detection.py --video vids/me.mp4 --track --save-boxes boxes/test.pkl --save-video vids/me_out.mp4 --imagedir imdata --database records.db --location "TJ202"
 
 
-	def run_detect_faces(self, command):
+	def run_detect_faces(self, file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
 		try:
 			print('Running!')
+			process_video.detect_faces_video(file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames)
 			#subprocess.run(command)
 		except Exception as e:
 			print('error: ')
