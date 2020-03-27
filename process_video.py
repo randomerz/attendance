@@ -17,6 +17,8 @@ import progressbar  # pip3 install progressbar2
 from munkres import Munkres
 from progress.bar import Bar
 
+from kivy.graphics.texture import Texture
+
 try:
 	from secrets import token_hex
 except ImportError:
@@ -48,6 +50,8 @@ init = False
 widgets = [' [', progressbar.Timer(), '] ', progressbar.Bar(), ' (', progressbar.ETA(), ') ', ]
 
 eng, m = None, None
+
+app = None
 
 #####################
 
@@ -110,6 +114,7 @@ def readVideo(fname, n=-1, s=1):
 		if frame is None or frame.shape[0] <= 0 or frame.shape[1] <= 1: break
 		i += 1
 		if i % s != 0: continue
+		app.console_display_widget.update_texture(frame) # 
 		vid.append(frame)
 		if cv.waitKey(1) & 0xFF == ord('q'): break
 	return vid
@@ -236,11 +241,27 @@ def debug(boxes):
 				stp = j
 				break
 			print(j, end = " ")
-		print("|",stp)
+		print("|", stp)
 		boxes[i] = boxes[i][0:stp]
 
 def detect_faces_video(file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames):
 	global init, eng, m
+
+	capture = cv.VideoCapture(0)
+	ret, frame = capture.read()
+	capture.release()
+
+	buf1 = cv.flip(frame, 0)
+	buf = buf1.tostring()
+	texture1 = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
+	texture1.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+	app.console_display_widget.img.texture = texture1
+	return
+	frame=None
+	# app.console_display_widget.update_texture(frame)
+
+	print(app, app.console_display_widget, app.console_display_widget.label, app.console_display_widget.label.text)
+	app.console_display_widget.label.text = "temp"
 
 	if not init:
 		os.chdir("tiny")
@@ -252,6 +273,9 @@ def detect_faces_video(file_path, db_path, location, image_dir, save_vid_path, s
 		m = Munkres()
 
 		init = True
+	
+	app.console_display_widget.label.text = "spun up"
+
 
 	vid = readVideo(os.path.join('..', file_path), num_frames) #, skip_rate)
 	print("Read video of size", len(vid), "given maximum number of frames =", num_frames, "and skip rate =", '1', "frames")

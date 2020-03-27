@@ -3,6 +3,7 @@ import sqlite3
 import subprocess
 import sys
 import threading
+import time
 
 import cv2
 import db_manager
@@ -268,11 +269,13 @@ class ConsoleDisplayWidget(BoxLayout):
 
 	def update_texture(self, frame):
 		# updates image with a cv2 image
+		print('updated frame')
 		buf1 = cv2.flip(frame, 0)
 		buf = buf1.tostring()
 		texture1 = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr') 
 		texture1.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
 		self.img.texture = texture1
+		print('updated frame')
 
 
 #
@@ -401,6 +404,7 @@ class AttendanceApp(App):
 	video_side = None
 	train_main = None
 	train_side = None
+	console_display_widget = None
 
 	side_student_string = StringProperty('[color=%s]Student[color=%s]' % (color_blue, color_blue))
 	side_attendence_string = StringProperty('Attendence')
@@ -460,13 +464,6 @@ class AttendanceApp(App):
 		self.side_student_string = 'Student'
 		self.side_attendence_string = '[color=%s]Attendence[color=%s]' % (color_blue, color_blue)
 		self.side_train_string = 'Train'
-
-		self.main_cont.clear_widgets()
-		t = ConsoleDisplayWidget()
-		self.main_cont.add_widget(t)
-		capture = cv2.VideoCapture(0)
-		ret, frame = capture.read()
-		t.update_texture(frame)
 
 	def switch_to_train(self):
 		self.tab = 2
@@ -595,9 +592,25 @@ class AttendanceApp(App):
 		if int(num_frames) > 0:
 			c += ['-n', num_frames]
 		print(' '.join(c))
+
+		self.main_cont.clear_widgets()
+		self.console_display_widget = ConsoleDisplayWidget()
+		self.main_cont.add_widget(self.console_display_widget)
+		process_video.app = self
+
+		# capture = cv2.VideoCapture(0)
+		# ret, frame = capture.read()
+		# capture.release()
+		# self.console_display_widget.update_texture(frame)
+		# capture = cv2.VideoCapture(0)
+		# ret, frame = capture.read()
+		# capture.release()
+		# self.console_display_widget.update_texture(frame)
+
 		self.detect_faces_thread = threading.Thread(target=self.run_detect_faces, args=(file_path, db_path, location, image_dir, save_vid_path, save_boxes_path, track_faces, num_frames, ))
 		self.detect_faces_thread.daemon = True # kill thread when main program ends
 		self.detect_faces_thread.start()
+
 		#Clock.schedule_once(self.run_detect_faces(c))
 		# subprocess.run(c)
 		#python3 detection.py --video vids/me.mp4 --track --save-boxes boxes/test.pkl --save-video vids/me_out.mp4 --imagedir imdata --database records.db --location "TJ202"
