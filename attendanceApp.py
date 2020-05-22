@@ -829,7 +829,7 @@ class AttendanceApp(App):
 		self.student_main.class_tabs.append(tab)
 		self.student_main.add_widget(tab)
 
-		db_manager.close(conn)
+		# db_manager.close(conn)
 
 		self.dismiss_create_class_popup()
 
